@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       const tag = text(form, "tag", 30);
       const front = form.get("front");
       const back = form.get("back");
-      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 코디명을 입력해 주세요." });
+      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 카드명을 입력해 주세요." });
       if (!ALLOWED_TAGS.has(tag)) return response(400, { error: "올바른 타입 태그를 선택해 주세요." });
       if (password.length < 8 || password.length > 200) return response(400, { error: "비밀번호는 8~200자로 입력해 주세요." });
       if (!(front instanceof File) || !(back instanceof File)) return response(400, { error: "앞면과 뒷면 이미지를 모두 선택해 주세요." });
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       try {
         frontPath = await uploadImage(supabase, id, "front", front);
         backPath = await uploadImage(supabase, id, "back", back);
-        const { error: insertError } = await supabase.from("coords").insert({
+        const { error: insertError } = await supabase.from("friends_card").insert({
           id, name_ko: nameKo, name_ja: nameJa, tag,
           front_image_path: frontPath, back_image_path: backPath,
           x_id: text(form, "x_id", 80),
@@ -110,20 +110,20 @@ Deno.serve(async (req) => {
           my_character: text(form, "my_character", 80),
           character_owner: text(form, "character_owner", 100),
         });
-        if (insertError) throw new Error("코디 정보 저장에 실패했습니다: " + insertError.message);
+        if (insertError) throw new Error("프렌즈카드 정보 저장에 실패했습니다: " + insertError.message);
         const credential = await hashPassword(password);
         const { error: secretError } = await supabase.from("coord_credentials").insert({
           coord_id: id, password_salt: credential.salt, password_hash: credential.hash,
         });
         if (secretError) {
-          await supabase.from("coords").delete().eq("id", id);
+          await supabase.from("friends_card").delete().eq("id", id);
           throw new Error("비밀번호 정보를 저장하지 못했습니다.");
         }
       } catch (err) {
         await removeImages(supabase, [frontPath, backPath]);
         throw err;
       }
-      return response(201, { ok: true, id, message: "코디가 등록되었습니다." });
+      return response(201, { ok: true, id, message: "프렌즈카드가 등록되었습니다." });
     }
 
     if (action === "update" || action === "delete") {
@@ -133,26 +133,26 @@ Deno.serve(async (req) => {
 
       const { data: credential, error: credentialError } = await supabase
         .from("coord_credentials").select("password_salt,password_hash").eq("coord_id", id).maybeSingle();
-      if (credentialError || !credential) return response(404, { error: "코디를 찾을 수 없거나 비밀번호 정보가 없습니다." });
+      if (credentialError || !credential) return response(404, { error: "프렌즈카드를 찾을 수 없거나 비밀번호 정보가 없습니다." });
       const valid = await verifyPassword(password, credential.password_salt, credential.password_hash);
       if (!valid) return response(403, { error: "비밀번호가 일치하지 않습니다." });
 
-      const { data: current, error: currentError } = await supabase.from("coords")
+      const { data: current, error: currentError } = await supabase.from("friends_card")
         .select("front_image_path,back_image_path").eq("id", id).maybeSingle();
-      if (currentError || !current) return response(404, { error: "코디를 찾을 수 없습니다." });
+      if (currentError || !current) return response(404, { error: "프렌즈카드를 찾을 수 없습니다." });
 
       if (action === "delete") {
-        const { error: deleteError } = await supabase.from("coords").delete().eq("id", id);
-        if (deleteError) return response(500, { error: "코디 삭제에 실패했습니다." });
+        const { error: deleteError } = await supabase.from("friends_card").delete().eq("id", id);
+        if (deleteError) return response(500, { error: "프렌즈카드 삭제에 실패했습니다." });
         await supabase.from("coord_credentials").delete().eq("coord_id", id);
         await removeImages(supabase, [current.front_image_path, current.back_image_path]);
-        return response(200, { ok: true, message: "코디가 삭제되었습니다." });
+        return response(200, { ok: true, message: "프렌즈카드가 삭제되었습니다." });
       }
 
       const nameKo = text(form, "name_ko", 100);
       const nameJa = text(form, "name_ja", 100);
       const tag = text(form, "tag", 30);
-      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 코디명을 입력해 주세요." });
+      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 카드명을 입력해 주세요." });
       if (!ALLOWED_TAGS.has(tag)) return response(400, { error: "올바른 타입 태그를 선택해 주세요." });
 
       let frontPath = current.front_image_path;
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           backPath = await uploadImage(supabase, id, "back", back);
           uploaded.push(backPath);
         }
-        const { error: updateError } = await supabase.from("coords").update({
+        const { error: updateError } = await supabase.from("friends_card").update({
           name_ko: nameKo, name_ja: nameJa, tag,
           front_image_path: frontPath, back_image_path: backPath,
           x_id: text(form, "x_id", 80),
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
           character_owner: text(form, "character_owner", 100),
           updated_at: new Date().toISOString(),
         }).eq("id", id);
-        if (updateError) throw new Error("코디 수정에 실패했습니다: " + updateError.message);
+        if (updateError) throw new Error("프렌즈카드 수정에 실패했습니다: " + updateError.message);
       } catch (err) {
         await removeImages(supabase, uploaded);
         throw err;
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       if (frontPath !== current.front_image_path) oldPaths.push(current.front_image_path);
       if (backPath !== current.back_image_path) oldPaths.push(current.back_image_path);
       await removeImages(supabase, oldPaths);
-      return response(200, { ok: true, id, message: "코디가 수정되었습니다." });
+      return response(200, { ok: true, id, message: "프렌즈카드가 수정되었습니다." });
     }
 
     return response(400, { error: "지원하지 않는 작업입니다." });
