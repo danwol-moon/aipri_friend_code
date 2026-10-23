@@ -1,4 +1,4 @@
-// 아이프리 코디 도감 — Supabase 연결 설정
+// 프렌즈카드 모음 — Supabase 연결 설정
 // Project URL + publishable/anon key만 입력하세요.
 // secret/service_role 키는 절대 이 파일에 넣지 마세요.
 const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
@@ -28,7 +28,7 @@ function isConfigured() {
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-function bestName(item) { return item.name_ko || item.name_ja || "이름 없는 코디"; }
+function bestName(item) { return item.name_ko || item.name_ja || "이름 없는 프렌즈카드"; }
 function imageUrl(path) {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${String(path).split("/").map(encodeURIComponent).join("/")}`;
 }
@@ -39,12 +39,12 @@ async function loadCoords() {
     emptyState.hidden = true;
     return;
   }
-  gallery.innerHTML = '<p class="muted">코디를 불러오는 중…</p>';
+  gallery.innerHTML = '<p class="muted">프렌즈카드를 불러오는 중…</p>';
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/coords?select=*&order=created_at.desc`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/friends_card?select=*&order=created_at.desc`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
     });
-    if (!response.ok) throw new Error("코디 목록을 불러오지 못했습니다. Supabase URL/키와 RLS 정책을 확인해 주세요.");
+    if (!response.ok) throw new Error("프렌즈카드 목록을 불러오지 못했습니다. Supabase URL/키와 RLS 정책을 확인해 주세요.");
     coords = await response.json();
     render();
   } catch (error) {
@@ -125,7 +125,7 @@ function openDetail(id) {
   document.querySelector("#deleteCoordButton").addEventListener("click", async () => {
     const password = document.querySelector("#ownerPassword").value;
     if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
-    if (!confirm("이 코디를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
+    if (!confirm("이 프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
     const data = new FormData();
     data.append("action","delete"); data.append("id",item.id); data.append("password",password);
     setOwnerMessage("비밀번호 확인 및 삭제 중…");
@@ -161,8 +161,8 @@ function openCreateForm() {
   resetFileRequirements(false);
   formMessage.textContent = "";
   registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR COORD";
-  registerDialog.querySelector("h2").textContent = "코디 등록하기";
-  registerForm.querySelector('button[type="submit"]').textContent = "코디 등록하기";
+  registerDialog.querySelector("h2").textContent = "프렌즈카드 등록하기";
+  registerForm.querySelector('button[type="submit"]').textContent = "프렌즈카드 등록하기";
   registerDialog.showModal();
 }
 function openEditForm(item, password) {
@@ -179,7 +179,7 @@ function openEditForm(item, password) {
   resetFileRequirements(true);
   formMessage.textContent = "사진을 선택하지 않으면 기존 이미지를 유지합니다.";
   registerDialog.querySelector(".eyebrow").textContent = "EDIT YOUR COORD";
-  registerDialog.querySelector("h2").textContent = "코디 수정하기";
+  registerDialog.querySelector("h2").textContent = "프렌즈카드 수정하기";
   registerForm.querySelector('button[type="submit"]').textContent = "수정 내용 저장";
   registerDialog.showModal();
 }
@@ -194,7 +194,7 @@ registerForm.addEventListener("submit", async e => {
   const front = data.get("front"), back = data.get("back");
   if (!currentEditId && (!front?.size || !back?.size)) { formMessage.textContent = "앞면과 뒷면 이미지를 모두 선택해 주세요."; return; }
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
-  if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디명을 하나 이상 입력해 주세요."; return; }
+  if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 카드명을 하나 이상 입력해 주세요."; return; }
   if (String(data.get("password")||"").length < 8) { formMessage.textContent = "비밀번호는 8자 이상 입력해 주세요."; return; }
   const payload = new FormData();
   payload.append("action", currentEditId ? "update" : "create");
@@ -211,7 +211,7 @@ registerForm.addEventListener("submit", async e => {
   if (back?.size) payload.append("back", back);
   const submit = registerForm.querySelector('button[type="submit"]');
   submit.disabled = true;
-  formMessage.textContent = currentEditId ? "코디 수정 중…" : "이미지와 코디 정보를 저장 중…";
+  formMessage.textContent = currentEditId ? "프렌즈카드 수정 중…" : "이미지와 코디 정보를 저장 중…";
   const result = await callFunction(payload);
   submit.disabled = false;
   if (!result.ok) { formMessage.textContent = result.error || "저장하지 못했습니다."; return; }
