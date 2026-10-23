@@ -63,7 +63,7 @@ async function uploadImage(supabase: ReturnType<typeof createClient>, coordId: s
   return path;
 }
 async function removeImages(supabase: ReturnType<typeof createClient>, paths: string[]) {
-  const valid = paths.filter(Boolean);
+  const valid = [...new Set(paths.filter(Boolean))];
   if (!valid.length) return;
   const { error } = await supabase.storage.from(BUCKET).remove(valid);
   if (error) console.error("Storage cleanup failed", error.message);
@@ -88,20 +88,25 @@ Deno.serve(async (req) => {
     if (action === "create") {
       const nameKo = text(form, "name_ko", 100);
       const nameJa = text(form, "name_ja", 100);
-      const tag = text(form, "tag", 30);
-      const front = form.get("front");
-      const back = form.get("back");
-      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 카드명을 입력해 주세요." });
-      if (!ALLOWED_TAGS.has(tag)) return response(400, { error: "올바른 타입 태그를 선택해 주세요." });
-      if (password.length < 8 || password.length > 200) return response(400, { error: "비밀번호는 8~200자로 입력해 주세요." });
-      if (!(front instanceof File) || !(back instanceof File)) return response(400, { error: "앞면과 뒷면 이미지를 모두 선택해 주세요." });
+      const tags = text(form, "tag", 200).split(",").map(value => value.trim()).filter(Boolean);
+      const tag = tags.join(",");
+      const frontValue = form.get("front");
+      const backValue = form.get("back");
+      const front = frontValue instanceof File && frontValue.size > 0 ? frontValue : null;
+      const back = backValue instanceof File && backValue.size > 0 ? backValue : null;
+      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 코디 이름을 입력해 주세요." });
+      if (!tags.length || tags.some(value => !ALLOWED_TAGS.has(value))) return response(400, { error: "태그를 하나 이상 올바르게 선택해 주세요." });
+      if (password.length < 4 || password.length > 200) return response(400, { error: "비밀번호는 4~200자로 입력해 주세요." });
+      if (!front && !back) return response(400, { error: "프렌즈카드 이미지 또는 코디 이미지 중 하나 이상 선택해 주세요." });
 
       const id = crypto.randomUUID();
       let frontPath = "";
       let backPath = "";
       try {
-        frontPath = await uploadImage(supabase, id, "front", front);
-        backPath = await uploadImage(supabase, id, "back", back);
+        if (front) frontPath = await uploadImage(supabase, id, "front", front);
+        if (back) backPath = await uploadImage(supabase, id, "back", back);
+        if (!frontPath) frontPath = backPath;
+        if (!backPath) backPath = frontPath;
         const { error: insertError } = await supabase.from("friends_card").insert({
           id, name_ko: nameKo, name_ja: nameJa, tag,
           front_image_path: frontPath, back_image_path: backPath,
@@ -129,7 +134,7 @@ Deno.serve(async (req) => {
     if (action === "update" || action === "delete") {
       const id = text(form, "id", 60);
       if (!/^[0-9a-f-]{36}$/i.test(id)) return response(400, { error: "코디 ID가 올바르지 않습니다." });
-      if (password.length < 8 || password.length > 200) return response(400, { error: "등록 비밀번호를 입력해 주세요." });
+      if (password.length < 4 || password.length > 200) return response(400, { error: "등록 비밀번호를 4자 이상 입력해 주세요." });
 
       const { data: credential, error: credentialError } = await supabase
         .from("coord_credentials").select("password_salt,password_hash").eq("coord_id", id).maybeSingle();
@@ -151,9 +156,10 @@ Deno.serve(async (req) => {
 
       const nameKo = text(form, "name_ko", 100);
       const nameJa = text(form, "name_ja", 100);
-      const tag = text(form, "tag", 30);
-      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 카드명을 입력해 주세요." });
-      if (!ALLOWED_TAGS.has(tag)) return response(400, { error: "올바른 타입 태그를 선택해 주세요." });
+      const tags = text(form, "tag", 200).split(",").map(value => value.trim()).filter(Boolean);
+      const tag = tags.join(",");
+      if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 코디 이름을 입력해 주세요." });
+      if (!tags.length || tags.some(value => !ALLOWED_TAGS.has(value))) return response(400, { error: "태그를 하나 이상 올바르게 선택해 주세요." });
 
       let frontPath = current.front_image_path;
       let backPath = current.back_image_path;
