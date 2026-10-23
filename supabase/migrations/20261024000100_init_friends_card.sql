@@ -3,14 +3,6 @@
 
 create extension if not exists pgcrypto;
 
--- 이전 안내에 따라 public.coords 테이블을 먼저 만들었다면 이름만 변경합니다.
-do $
-begin
-  if to_regclass('public.coords') is not null and to_regclass('public.friends_card') is null then
-    alter table public.coords rename to friends_card;
-  end if;
-end $;
-
 create table if not exists public.friends_card (
   id uuid primary key default gen_random_uuid(),
   name_ko text not null default '' check (char_length(name_ko) <= 100),
