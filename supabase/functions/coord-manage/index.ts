@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return response(405, { error: "POST 요청만 지원합니다." });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = Deno.env.get("AIPRI_SUPABASE_SERVICE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceKey) return response(500, { error: "서버 환경 설정이 완료되지 않았습니다." });
 
   try {
