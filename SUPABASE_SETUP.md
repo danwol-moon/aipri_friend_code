@@ -14,12 +14,12 @@
 4. Storage에서 `coord-images` 버킷이 생성됐는지 확인합니다. SQL이 버킷을 public으로 만들고, 이미지 형식을 JPEG/PNG/WEBP/GIF, 파일 크기를 5MB로 제한합니다.
 5. 공개 버킷의 파일은 URL을 아는 누구나 볼 수 있습니다. 브라우저 역할에는 업로드/삭제 권한을 주지 않습니다.
 
-## 3. Edge Function 비밀값 설정
-Supabase 대시보드의 Edge Functions > Secrets에서 다음을 확인합니다.
-- `SUPABASE_URL`: 프로젝트 URL
-- `SUPABASE_SERVICE_ROLE_KEY`: Project Settings > API Keys의 secret/service_role 키
+## 3. Edge Function 비밀값 확인
+Edge Functions는 보통 `SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY` 환경 변수를 기본 제공하지만, 프로젝트 설정에 따라 확인이 필요할 수 있습니다.
 
-Supabase Edge Functions는 기본 환경 변수로 이 값을 제공하는 경우가 있습니다. 사용 중인 프로젝트의 함수 환경에서 실제 값이 제공되는지 확인하세요. 이 키는 절대 `app.js`, GitHub 저장소, 공개 이슈/채팅에 넣지 마세요.
+1. Supabase 대시보드의 Project Settings > API Keys에서 service_role/secret 키를 확인합니다.
+2. 함수 환경에서 기본 `SUPABASE_SERVICE_ROLE_KEY`가 제공되지 않는 경우에만 Edge Functions > Secrets에 사용자 정의 이름 `AIPRI_SUPABASE_SERVICE_KEY`로 해당 키를 등록합니다. 사용자 정의 비밀 이름은 `SUPABASE_` 접두사로 시작하면 안 됩니다.
+3. 이 키는 절대 `app.js`, GitHub 저장소, 공개 이슈/채팅에 넣지 마세요. 이 대화에도 보내지 마세요.
 
 ## 4. Edge Function 배포
 이 저장소의 `supabase/functions/coord-manage/index.ts`를 배포합니다. 가장 쉬운 방법은 로컬 PC에 Node.js와 Supabase CLI를 설치한 다음 저장소를 clone하고 아래 명령을 실행하는 것입니다.
