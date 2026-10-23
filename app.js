@@ -54,8 +54,9 @@ async function loadCoords() {
 function filteredCoords() {
   const q = searchInput.value.trim().toLocaleLowerCase();
   let list = coords.filter(item => {
-    const haystack = [item.name_ko,item.name_ja,item.x_id,item.display_name,item.my_character,item.character_owner,item.tag].join(" ").toLocaleLowerCase();
-    return (!q || haystack.includes(q)) && (!tagFilter.value || item.tag === tagFilter.value);
+    const haystack = [item.name_ko,item.name_ja,item.x_id,item.my_character,item.character_owner,item.tag].join(" ").toLocaleLowerCase();
+    const tags = String(item.tag || "").split(",").filter(Boolean);
+    return (!q || haystack.includes(q)) && (!tagFilter.value || tags.includes(tagFilter.value));
   });
   if (sortFilter.value === "name") list.sort((a,b) => bestName(a).localeCompare(bestName(b),"ko"));
   else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
@@ -71,11 +72,11 @@ function render() {
   }
   gallery.innerHTML = list.map(item => `
     <article class="coord-card" tabindex="0" role="button" data-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(bestName(item))} 상세 보기">
-      <div class="card-images">
-        <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="앞면 이미지" loading="lazy">
-        <img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="뒷면 이미지" loading="lazy">
+      <div class="card-images ${item.front_image_path === item.back_image_path ? "single" : ""}">
+        <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지" loading="lazy">
+        ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지" loading="lazy">`}
       </div>
-      <div class="card-body"><span class="tag">${escapeHtml(item.tag)}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || item.display_name || "등록자 정보 없음")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div></div>
+      <div class="card-body"><span class="tag">${escapeHtml(String(item.tag || "").split(",").join(" · "))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div></div>
     </article>`).join("");
 }
 function similarity(a,b) {
@@ -103,11 +104,14 @@ function openDetail(id) {
   const similar = findSimilar(item);
   document.querySelector("#detailContent").innerHTML = `
     <p class="eyebrow">COORD DETAIL</p><h2>${escapeHtml(bestName(item))}</h2>
-    <div class="detail-images"><img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="앞면"><img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="뒷면"></div>
+    <div class="detail-images ${item.front_image_path === item.back_image_path ? "single" : ""}">
+      <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지">
+      ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지">`}
+    </div>
     <div class="detail-info">
-      <p><strong>일본어 이름</strong><br>${escapeHtml(item.name_ja || "—")}</p><p><strong>타입</strong><br>${escapeHtml(item.tag || "—")}</p>
-      <p><strong>등록자</strong><br>${escapeHtml(item.display_name || "—")} ${escapeHtml(item.x_id || "")}</p><p><strong>마이캐릭터</strong><br>${escapeHtml(item.my_character || "—")}</p>
-      ${item.character_owner?'<p><strong>캐릭터 관련 정보</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
+      <p><strong>코디 이름 (일본어)</strong><br>${escapeHtml(item.name_ja || "—")}</p><p><strong>태그</strong><br>${escapeHtml(String(item.tag || "").split(",").join(" · ") || "—")}</p>
+      <p><strong>X ID</strong><br>${escapeHtml(item.x_id || "—")}</p><p><strong>마이캐릭터</strong><br>${escapeHtml(item.my_character || "—")}</p>
+      ${item.character_owner?'<p><strong>대행 프카 정보</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
     </div>
     <div class="recommendations"><h3>✧ 이로치 후보 추천</h3><p>${similar.length ? similar.map(x=>escapeHtml(bestName(x))+" ("+Math.round(x.score*100)+"% 유사)").join(" · ") : "비교할 만한 코디가 아직 없어요."}<br><br>이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
     <div class="recommendations"><h3>등록자 관리</h3><p>등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요.</p>
@@ -152,15 +156,15 @@ async function callFunction(formData) {
   }
 }
 function resetFileRequirements(isEdit) {
-  registerForm.elements.front.required = !isEdit;
-  registerForm.elements.back.required = !isEdit;
+  registerForm.elements.front.required = false;
+  registerForm.elements.back.required = false;
 }
 function openCreateForm() {
   currentEditId = null;
   registerForm.reset();
   resetFileRequirements(false);
   formMessage.textContent = "";
-  registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR COORD";
+  registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR FRIEND CARD";
   registerDialog.querySelector("h2").textContent = "프렌즈카드 등록하기";
   registerForm.querySelector('button[type="submit"]').textContent = "프렌즈카드 등록하기";
   registerDialog.showModal();
@@ -170,9 +174,9 @@ function openEditForm(item, password) {
   registerForm.reset();
   registerForm.elements.nameKo.value = item.name_ko || "";
   registerForm.elements.nameJa.value = item.name_ja || "";
-  registerForm.elements.tag.value = item.tag || "";
+  const selectedTags = String(item.tag || "").split(",").filter(Boolean);
+  registerForm.querySelectorAll('input[name="tag"]').forEach(input => { input.checked = selectedTags.includes(input.value); });
   registerForm.elements.xId.value = item.x_id || "";
-  registerForm.elements.displayName.value = item.display_name || "";
   registerForm.elements.myCharacter.value = item.my_character || "";
   registerForm.elements.characterOwner.value = item.character_owner || "";
   registerForm.elements.password.value = password;
@@ -192,19 +196,20 @@ registerForm.addEventListener("submit", async e => {
   if (!isConfigured()) { formMessage.textContent = "먼저 app.js에 Supabase URL과 공개용 키를 입력해 주세요."; return; }
   const data = new FormData(registerForm);
   const front = data.get("front"), back = data.get("back");
-  if (!currentEditId && (!front?.size || !back?.size)) { formMessage.textContent = "앞면과 뒷면 이미지를 모두 선택해 주세요."; return; }
+  const tags = data.getAll("tag").map(value => String(value)).filter(Boolean);
+  if (!currentEditId && !front?.size && !back?.size) { formMessage.textContent = "프렌즈카드 이미지 또는 코디 이미지 중 하나 이상 선택해 주세요."; return; }
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
-  if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 카드명을 하나 이상 입력해 주세요."; return; }
-  if (String(data.get("password")||"").length < 8) { formMessage.textContent = "비밀번호는 8자 이상 입력해 주세요."; return; }
+  if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
+  if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
+  if (String(data.get("password")||"").length < 4) { formMessage.textContent = "비밀번호는 4자 이상 입력해 주세요."; return; }
   const payload = new FormData();
   payload.append("action", currentEditId ? "update" : "create");
   if (currentEditId) payload.append("id", currentEditId);
   payload.append("password", String(data.get("password")||""));
   payload.append("name_ko", String(data.get("nameKo")||"").trim());
   payload.append("name_ja", String(data.get("nameJa")||"").trim());
-  payload.append("tag", String(data.get("tag")||""));
+  payload.append("tag", tags.join(","));
   payload.append("x_id", String(data.get("xId")||"").trim());
-  payload.append("display_name", String(data.get("displayName")||"").trim());
   payload.append("my_character", String(data.get("myCharacter")||"").trim());
   payload.append("character_owner", String(data.get("characterOwner")||"").trim());
   if (front?.size) payload.append("front", front);
