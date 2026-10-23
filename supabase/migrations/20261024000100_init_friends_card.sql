@@ -3,6 +3,14 @@
 
 create extension if not exists pgcrypto;
 
+-- 이전 안내에 따라 public.coords 테이블을 먼저 만들었다면 이름만 변경합니다.
+do $
+begin
+  if to_regclass('public.coords') is not null and to_regclass('public.friends_card') is null then
+    alter table public.coords rename to friends_card;
+  end if;
+end $;
+
 create table if not exists public.friends_card (
   id uuid primary key default gen_random_uuid(),
   name_ko text not null default '' check (char_length(name_ko) <= 100),
@@ -24,7 +32,7 @@ create index if not exists friends_card_tag_idx on public.friends_card (tag);
 create index if not exists friends_card_name_ko_idx on public.friends_card (name_ko);
 create index if not exists friends_card_name_ja_idx on public.friends_card (name_ja);
 
--- 비밀번호 해시/솔트는 공개 코디 테이블과 분리하고 API 역할에 노출하지 않습니다.
+-- 비밀번호 해시/솔트는 공개 프렌즈카드 테이블과 분리하고 API 역할에 노출하지 않습니다.
 create table if not exists public.coord_credentials (
   coord_id uuid primary key references public.friends_card(id) on delete cascade,
   password_salt text not null,
@@ -35,9 +43,10 @@ create table if not exists public.coord_credentials (
 alter table public.friends_card enable row level security;
 alter table public.coord_credentials enable row level security;
 
--- 방문자는 공개 코디 목록만 읽을 수 있습니다.
+-- 방문자는 공개 프렌즈카드 목록만 읽을 수 있습니다.
 revoke all on table public.friends_card from anon, authenticated;
 grant select on table public.friends_card to anon, authenticated;
+drop policy if exists "Public can read coords" on public.friends_card;
 drop policy if exists "Public can read friends_card" on public.friends_card;
 create policy "Public can read friends_card"
   on public.friends_card for select
