@@ -159,9 +159,49 @@ function resetFileRequirements(isEdit) {
   registerForm.elements.front.required = false;
   registerForm.elements.back.required = false;
 }
+function resetImagePreviews() {
+  registerForm.querySelectorAll('input[type="file"][name="front"], input[type="file"][name="back"]').forEach(input => {
+    const box = input.closest(".upload-box");
+    const preview = box.querySelector(".upload-preview");
+    const hint = box.querySelector(".upload-hint");
+    if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+    preview.removeAttribute("src");
+    delete preview.dataset.objectUrl;
+    preview.hidden = true;
+    if (hint) hint.hidden = false;
+    box.classList.remove("has-preview");
+  });
+}
+function setupImagePreviews() {
+  registerForm.querySelectorAll('input[type="file"][name="front"], input[type="file"][name="back"]').forEach(input => {
+    input.addEventListener("change", () => {
+      const box = input.closest(".upload-box");
+      const preview = box.querySelector(".upload-preview");
+      const hint = box.querySelector(".upload-hint");
+      const file = input.files?.[0];
+      if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+      delete preview.dataset.objectUrl;
+      if (!file) {
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        if (hint) hint.hidden = false;
+        box.classList.remove("has-preview");
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      preview.src = objectUrl;
+      preview.dataset.objectUrl = objectUrl;
+      preview.hidden = false;
+      if (hint) hint.hidden = true;
+      box.classList.add("has-preview");
+    });
+  });
+}
+setupImagePreviews();
 function openCreateForm() {
   currentEditId = null;
   registerForm.reset();
+  resetImagePreviews();
   resetFileRequirements(false);
   formMessage.textContent = "";
   registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR FRIEND CARD";
@@ -172,6 +212,7 @@ function openCreateForm() {
 function openEditForm(item, password) {
   currentEditId = item.id;
   registerForm.reset();
+  resetImagePreviews();
   registerForm.elements.nameKo.value = item.name_ko || "";
   registerForm.elements.nameJa.value = item.name_ja || "";
   const selectedTags = String(item.tag || "").split(",").filter(Boolean);
@@ -202,6 +243,15 @@ registerForm.addEventListener("submit", async e => {
   if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
   if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
   if (String(data.get("password")||"").length < 4) { formMessage.textContent = "비밀번호는 4자 이상 입력해 주세요."; return; }
+  const missingFields = [];
+  if (!String(data.get("nameKo") || "").trim()) missingFields.push("코디 이름 (한국어)");
+  if (!String(data.get("nameJa") || "").trim()) missingFields.push("코디 이름 (일본어)");
+  if (!String(data.get("xId") || "").trim()) missingFields.push("X ID");
+  if (!String(data.get("myCharacter") || "").trim()) missingFields.push("마이캐릭터명");
+  if (missingFields.length) {
+    const message = "빈칸이 존재합니다. 이대로 등록하겠습니까?\n\n비어 있는 항목: " + missingFields.join(", ");
+    if (!window.confirm(message)) return;
+  }
   const payload = new FormData();
   payload.append("action", currentEditId ? "update" : "create");
   if (currentEditId) payload.append("id", currentEditId);
