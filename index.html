@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#"><span class="brand-mark">✦</span><span>프렌즈카드 모음<small>FRIENDS CARD COLLECTION</small></span></a>
-    <button id="openRegister" class="primary">＋ 카드 등록</button>
+    <button id="openRegister" class="primary">＋ 프카 이미지 등록</button>
   </header>
   <main>
     <section class="hero">
@@ -18,13 +18,13 @@
       <div class="hero-sparkle" aria-hidden="true">✧<span>✦</span>✧</div>
     </section>
     <section class="toolbar" aria-label="코디 검색 및 필터">
-      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="카드명, 마이캐릭터명, X ID 검색"></label>
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="코디 이름, 마이캐릭터명, X ID 검색"></label>
       <select id="tagFilter" aria-label="태그 필터"><option value="">모든 타입</option><option>프리마지</option><option>히미프리</option><option>오네프리</option><option>밀피</option><option>구미</option><option>스페셜</option></select>
       <select id="sortFilter" aria-label="정렬"><option value="newest">최신 등록순</option><option value="name">이름순</option></select>
     </section>
-    <div class="section-heading"><div><p class="eyebrow">FRIENDS CARD GALLERY</p><h2>카드 둘러보기 <span id="resultCount">0</span></h2></div><p class="muted">프렌즈카드를 눌러 상세 정보를 확인하세요.</p></div>
+    <div class="section-heading"><div><p class="eyebrow">FRIENDS CARD GALLERY</p><h2>코디 둘러보기 <span id="resultCount">0</span></h2></div><p class="muted">등록된 코디를 눌러 상세 정보를 확인하세요.</p></div>
     <section id="gallery" class="gallery" aria-live="polite"></section>
-    <p id="emptyState" class="empty-state" hidden>아직 등록된 프렌즈카드가 없어요.<br>첫 번째 프렌즈카드를 등록해 보세요!</p>
+    <p id="emptyState" class="empty-state" hidden>아직 등록된 코디가 없어요.<br>첫 번째 코디를 등록해 보세요!</p>
   </main>
   <dialog id="detailDialog" class="modal"><button class="close" data-close="detailDialog" aria-label="닫기">×</button><div id="detailContent"></div></dialog>
   <dialog id="registerDialog" class="modal register-modal">
@@ -32,20 +32,26 @@
     <p class="eyebrow">ADD YOUR FRIENDS CARD</p><h2>프렌즈카드 등록하기</h2>
     <form id="registerForm">
       <div class="image-fields">
-        <label class="upload-box"><span class="upload-icon">＋</span><strong>앞면 이미지</strong><small>이미지 파일 선택</small><input name="front" type="file" accept="image/*" required></label>
-        <label class="upload-box"><span class="upload-icon">＋</span><strong>뒷면 이미지</strong><small>이미지 파일 선택</small><input name="back" type="file" accept="image/*" required></label>
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>프렌즈카드 이미지</strong><small>이미지 파일 선택 (선택 사항)</small><input name="front" type="file" accept="image/*"></label>
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>코디 이미지</strong><small>이미지 파일 선택 (선택 사항)</small><input name="back" type="file" accept="image/*"></label>
       </div>
       <div class="form-grid">
-        <label>카드명 (한국어)<input name="nameKo" maxlength="100" placeholder="예: 달빛 프린세스 카드"></label>
-        <label>카드명 (日本語)<input name="nameJa" maxlength="100" placeholder="例：ムーンライトプリンセス"></label>
-        <label>타입 태그<select name="tag" required><option value="">선택해 주세요</option><option>프리마지</option><option>히미프리</option><option>오네프리</option><option>밀피</option><option>구미</option><option>스페셜</option></select></label>
-        <label>X ID<input name="xId" maxlength="80" placeholder="@username"></label>
-        <label>표시 이름<input name="displayName" maxlength="80" placeholder="표시할 이름"></label>
+        <label>코디 이름 (한국어)<input name="nameKo" maxlength="100" placeholder="팝핀 하트 바즈리움"></label>
+        <label>코디 이름 (일본어)<input name="nameJa" maxlength="100" placeholder="ポッピンハートバズリウム"></label>
+        <fieldset class="tag-checkboxes wide"><legend>태그 <span class="muted">(여러 개 선택 가능)</span></legend>
+          <label><input type="checkbox" name="tag" value="프리마지"> 프리마지</label>
+          <label><input type="checkbox" name="tag" value="히미프리"> 히미프리</label>
+          <label><input type="checkbox" name="tag" value="오네프리"> 오네프리</label>
+          <label><input type="checkbox" name="tag" value="밀피"> 밀피</label>
+          <label><input type="checkbox" name="tag" value="구미"> 구미</label>
+          <label><input type="checkbox" name="tag" value="스페셜"> 스페셜</label>
+        </fieldset>
+        <label class="wide">X ID<input name="xId" maxlength="80" placeholder="닉네임 (@아이디)"></label>
         <label>마이캐릭터명<input name="myCharacter" maxlength="80" placeholder="마이캐릭터 이름"></label>
-        <label class="wide">캐릭터 제공/대리 관련 정보 (선택)<input name="characterOwner" maxlength="100" placeholder="필요한 경우에만 입력"></label>
-        <label class="wide">수정·삭제 비밀번호<input name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="8자 이상 · 등록 후 본인 수정/삭제에 사용"></label>
+        <label class="wide">대행 프카 정보 (선택)<input name="characterOwner" maxlength="100" placeholder="00대행 A캐릭터"></label>
+        <label class="wide">수정·삭제 비밀번호<input name="password" type="password" minlength="4" autocomplete="new-password" required placeholder="4자 이상 · 등록 후 비밀번호 입력 시 수정/삭제 가능"></label>
       </div>
-      <p class="form-note">앞면·뒷면 이미지는 각각 5MB 이하로 등록할 수 있어요. 등록 비밀번호는 8자 이상으로 설정해 주세요.</p>
+      <p class="form-note">이미지는 한 장만 등록해도 돼요. JPG, PNG, WEBP, GIF 파일을 각각 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.</p>
       <button class="primary full" type="submit">프렌즈카드 등록하기</button>
       <p id="formMessage" class="form-message" role="status"></p>
     </form>
