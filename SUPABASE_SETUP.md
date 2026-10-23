@@ -1,54 +1,48 @@
-# 프렌즈카드 모음 — Supabase 연결 안내
+# 프렌즈카드 모음 — 설정 및 배포 안내
 
-이 저장소는 GitHub Pages 프런트엔드와 Supabase 백엔드를 사용합니다.
+이 저장소는 GitHub Pages 프런트엔드와 Supabase 백엔드를 사용합니다. SQL 스키마는 Supabase SQL Editor에서 이미 실행했다고 가정합니다.
 
-## 1. Supabase 프로젝트 생성
-1. https://supabase.com 에 로그인하고 새 프로젝트를 만듭니다.
-2. 프로젝트가 준비되면 Project URL과 publishable key(또는 구형 anon key)를 복사합니다.
-3. Project Settings > API Keys에서 키를 확인합니다. secret/service_role 키는 브라우저나 GitHub 파일에 넣지 마세요.
+## 완료된 설정
+- Supabase 프로젝트 URL: `https://zlaiquivnuluglchqlbr.supabase.co`
+- 프런트엔드의 `app.js`에 Project URL과 공개 Publishable key를 입력했습니다.
+- 데이터베이스 초기 SQL을 실행했습니다.
 
-## 2. 데이터베이스와 이미지 버킷 만들기
-1. Supabase 대시보드에서 SQL Editor > New query를 엽니다.
-2. `supabase/migrations/20261024000100_init_friends_card.sql`의 전체 내용을 붙여 넣고 Run을 누릅니다.
-3. SQL이 오류 없이 실행되면 Table Editor에서 `friends_card` 테이블을 확인합니다.
-4. Storage에서 `coord-images` 버킷이 생성됐는지 확인합니다. SQL이 버킷을 public으로 만들고, 이미지 형식을 JPEG/PNG/WEBP/GIF, 파일 크기를 5MB로 제한합니다.
-5. 공개 버킷의 파일은 URL을 아는 누구나 볼 수 있습니다. 브라우저 역할에는 업로드/삭제 권한을 주지 않습니다.
+## 1. 데이터베이스 확인
+Supabase 대시보드에서 Table Editor에 `friends_card`, `coord_credentials` 테이블이 있는지 확인합니다. Storage에서 `coord-images` 버킷이 있는지도 확인합니다. 초기 SQL이 성공했다면 버킷도 만들어졌어야 합니다.
 
-## 3. Edge Function 비밀값 확인
-Edge Functions는 보통 `SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY` 환경 변수를 기본 제공하지만, 프로젝트 설정에 따라 확인이 필요할 수 있습니다.
+## 2. Edge Function 배포용 GitHub Secrets 설정
+카드 등록·수정·삭제 기능은 Edge Function `coord-manage`가 담당합니다. 저장소에는 배포 워크플로 파일 `.github/workflows/deploy-supabase-function.yml`을 추가했습니다. 이 기능은 GitHub Actions에서 수동으로 실행할 수 있습니다.
 
-1. Supabase 대시보드의 Project Settings > API Keys에서 service_role/secret 키를 확인합니다.
-2. 함수 환경에서 기본 `SUPABASE_SERVICE_ROLE_KEY`가 제공되지 않는 경우에만 Edge Functions > Secrets에 사용자 정의 이름 `AIPRI_SUPABASE_SERVICE_KEY`로 해당 키를 등록합니다. 사용자 정의 비밀 이름은 `SUPABASE_` 접두사로 시작하면 안 됩니다.
-3. 이 키는 절대 `app.js`, GitHub 저장소, 공개 이슈/채팅에 넣지 마세요. 이 대화에도 보내지 마세요.
+GitHub 저장소에서 **Settings → Secrets and variables → Actions → New repository secret**을 열고 아래 3개를 하나씩 등록합니다.
 
-## 4. Edge Function 배포
-이 저장소의 `supabase/functions/coord-manage/index.ts`를 배포합니다. 가장 쉬운 방법은 로컬 PC에 Node.js와 Supabase CLI를 설치한 다음 저장소를 clone하고 아래 명령을 실행하는 것입니다.
+- `SUPABASE_ACCESS_TOKEN`: Supabase 계정의 Access Token. Supabase 대시보드의 계정 설정에서 Access Tokens를 찾아 새 토큰을 생성합니다.
+- `SUPABASE_PROJECT_REF`: `zlaiquivnuluglchqlbr`
+- `SUPABASE_DB_PASSWORD`: 이 Supabase 프로젝트를 만들 때 설정한 데이터베이스 비밀번호
 
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase functions deploy coord-manage --no-verify-jwt
-```
+비밀번호나 Access Token은 이 채팅이나 공개 파일에 보내거나 저장하지 마세요. 잊어버린 데이터베이스 비밀번호는 Supabase 프로젝트 설정에서 재설정해야 할 수 있습니다.
 
-이 함수는 공개 방문자가 프렌즈카드 등록/수정/삭제 요청을 보낼 수 있도록 JWT 검증을 끄고, 내부에서 요청 내용을 검증합니다. 그러므로 함수에는 공개 등록 스팸 방지(CAPTCHA/속도 제한)를 추가하는 것을 권장합니다. 함수가 service role로 DB/Storage에 접근하므로 서비스 키를 프런트엔드에 노출하지 마세요.
+Secrets를 등록한 뒤 GitHub 저장소의 **Actions** 탭 → **Deploy Supabase Edge Function** → **Run workflow** → **Run workflow**를 선택합니다. 실행이 성공하면 `coord-manage` 함수가 배포됩니다.
 
-## 5. 프런트엔드 연결
-`app.js` 맨 위의 `SUPABASE_URL`과 `SUPABASE_ANON_KEY` 값을 실제 프로젝트 값으로 바꿉니다. 이 값은 공개 브라우저용 publishable/anon key이며, RLS 정책으로 읽기 전용 접근만 허용됩니다. service_role/secret key를 넣으면 안 됩니다.
+함수가 배포된 뒤에도 서버가 서비스 키를 읽을 수 있어야 합니다. Supabase Edge Functions의 기본 환경 변수에 `SUPABASE_SERVICE_ROLE_KEY`가 제공되는지 확인합니다. 제공되지 않는 경우에만 Supabase의 Edge Functions → Secrets에서 `AIPRI_SUPABASE_SERVICE_KEY`라는 이름으로 서비스 키를 등록합니다. 서비스 키는 절대 `app.js`나 GitHub 저장소에 넣지 마세요.
 
-## 6. GitHub Pages 공개
-GitHub 저장소의 Settings > Pages에서 Deploy from a branch를 선택하고 `main` / `/(root)`를 선택한 뒤 Save를 누릅니다. 배포 URL이 나타날 때까지 기다립니다.
+## 3. GitHub Pages 공개 설정
+저장소에 GitHub Pages 자동 배포 워크플로 `.github/workflows/deploy-pages.yml`을 추가했습니다.
 
-## 7. 테스트 체크리스트
-- [ ] 비로그인 방문자가 프렌즈카드 목록을 읽을 수 있음
-- [ ] 새 프렌즈카드 등록 후 다른 브라우저에서도 표시됨
-- [ ] 등록 비밀번호가 틀리면 수정/삭제가 거절됨
-- [ ] 맞는 비밀번호로 프렌즈카드 정보를 수정할 수 있음
-- [ ] 맞는 비밀번호로 프렌즈카드를 삭제할 수 있음
-- [ ] 비밀번호 해시 테이블을 브라우저에서 조회할 수 없음
-- [ ] 브라우저에서 Storage에 직접 업로드/삭제할 수 없음
+1. GitHub 저장소의 **Settings → Pages**를 엽니다.
+2. **Build and deployment**의 Source를 **GitHub Actions**로 설정합니다.
+3. 저장소의 **Actions** 탭에서 **Deploy GitHub Pages** 워크플로가 실행되는지 확인합니다. 코드가 main 브랜치에 올라갈 때 자동으로 실행됩니다.
+4. 배포가 성공하면 Settings → Pages에 표시된 사이트 주소를 엽니다.
 
-## 주의
-- 지금 구조는 별도 계정 없이 비밀번호로 프렌즈카드를 관리합니다. 비밀번호를 잊으면 본인 확인을 자동으로 할 수 없습니다.
-- 서버 측 비밀번호 해시는 PBKDF2-HMAC-SHA-256을 사용합니다.
-- 공개 등록 API는 스팸/대량 업로드 위험이 있습니다. 공개 전 CAPTCHA, 요청 속도 제한, 운영자 신고/삭제 절차를 추가하세요.
-- Storage 파일 백업과 Postgres 데이터베이스 백업은 별개로 관리하세요.
+## 4. 테스트 순서
+- [ ] 사이트가 열리고 카드 목록 영역에 연결 오류가 표시되지 않는지 확인
+- [ ] 카드 등록 창에서 카드 앞면·뒷면 이미지와 필수 정보를 입력해 테스트 카드 등록
+- [ ] 등록 후 새로고침해도 카드가 보이는지 확인
+- [ ] 등록 비밀번호가 맞을 때 수정·삭제가 되는지 확인
+- [ ] 다른 브라우저에서도 같은 카드가 보이는지 확인
+
+## 보안 및 공개 전 주의
+- 브라우저 코드에는 공개용 Publishable/anon key만 사용합니다. `service_role` 또는 `secret` 키는 브라우저 코드에 넣지 마세요.
+- 카드 이미지는 공개 버킷에 저장되므로 업로드한 이미지는 누구나 볼 수 있습니다.
+- 수정·삭제 비밀번호는 8자 이상으로 설정하고 잊지 않도록 안전하게 보관하세요.
+- 현재 공개 등록 API에는 CAPTCHA나 속도 제한이 아직 없습니다. 사이트를 널리 공개하기 전에 스팸 방지 대책을 추가하는 것이 좋습니다.
+- 데이터베이스와 Storage 이미지는 별도로 백업해야 합니다.
