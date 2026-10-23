@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff7fc">
+  <title>아이프리 코디 도감</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">✦</span><span>아이프리 코디 도감<small>AIPRI COORD ARCHIVE</small></span></a>
+    <button id="openRegister" class="primary">＋ 코디 등록</button>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">YOUR COORD COLLECTION</p><h1>반짝이는 코디를<br><em>함께 모아봐요!</em></h1><p>마음에 드는 코디를 찾고, 나만의 코디 기록도 남겨보세요.</p></div>
+      <div class="hero-sparkle" aria-hidden="true">✧<span>✦</span>✧</div>
+    </section>
+    <section class="toolbar" aria-label="코디 검색 및 필터">
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="코디명, 마이캐릭터명, X ID 검색"></label>
+      <select id="tagFilter" aria-label="태그 필터"><option value="">모든 타입</option><option>프리마지</option><option>히미프리</option><option>오네프리</option><option>밀피</option><option>구미</option><option>스페셜</option></select>
+      <select id="sortFilter" aria-label="정렬"><option value="newest">최신 등록순</option><option value="name">이름순</option></select>
+    </section>
+    <div class="section-heading"><div><p class="eyebrow">COORD GALLERY</p><h2>코디 둘러보기 <span id="resultCount">0</span></h2></div><p class="muted">코디 카드를 눌러 상세 정보를 확인하세요.</p></div>
+    <section id="gallery" class="gallery" aria-live="polite"></section>
+    <p id="emptyState" class="empty-state" hidden>아직 등록된 코디가 없어요.<br>첫 번째 코디를 등록해 보세요!</p>
+  </main>
+  <dialog id="detailDialog" class="modal"><button class="close" data-close="detailDialog" aria-label="닫기">×</button><div id="detailContent"></div></dialog>
+  <dialog id="registerDialog" class="modal register-modal">
+    <button class="close" data-close="registerDialog" aria-label="닫기">×</button>
+    <p class="eyebrow">ADD YOUR COORD</p><h2>코디 등록하기</h2>
+    <form id="registerForm">
+      <div class="image-fields">
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>앞면 이미지</strong><small>이미지 파일 선택</small><input name="front" type="file" accept="image/*" required></label>
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>뒷면 이미지</strong><small>이미지 파일 선택</small><input name="back" type="file" accept="image/*" required></label>
+      </div>
+      <div class="form-grid">
+        <label>코디명 (한국어)<input name="nameKo" maxlength="100" placeholder="예: 달빛 프린세스 코디"></label>
+        <label>코디명 (日本語)<input name="nameJa" maxlength="100" placeholder="例：ムーンライトプリンセス"></label>
+        <label>타입 태그<select name="tag" required><option value="">선택해 주세요</option><option>프리마지</option><option>히미프리</option><option>오네프리</option><option>밀피</option><option>구미</option><option>스페셜</option></select></label>
+        <label>X ID<input name="xId" maxlength="80" placeholder="@username"></label>
+        <label>표시 이름<input name="displayName" maxlength="80" placeholder="표시할 이름"></label>
+        <label>마이캐릭터명<input name="myCharacter" maxlength="80" placeholder="마이캐릭터 이름"></label>
+        <label class="wide">캐릭터 제공/대리 관련 정보 (선택)<input name="characterOwner" maxlength="100" placeholder="필요한 경우에만 입력"></label>
+        <label class="wide">수정·삭제 비밀번호<input name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="8자 이상 · 등록 후 본인 수정/삭제에 사용"></label>
+      </div>
+      <p class="form-note">현재는 미리보기 단계입니다. 실제 공동 이용을 시작하기 전, 서버 저장소와 비밀번호 검증 설정이 필요합니다.</p>
+      <button class="primary full" type="submit">코디 등록하기</button>
+      <p id="formMessage" class="form-message" role="status"></p>
+    </form>
+  </dialog>
+  <footer><span>✦ 아이프리 코디 도감</span><span>팬메이드 아카이브 · 공식과 무관합니다</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
