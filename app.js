@@ -1,8 +1,8 @@
 // 프렌즈카드 모음 — Supabase 연결 설정
 // Project URL + publishable/anon key만 입력하세요.
 // secret/service_role 키는 절대 이 파일에 넣지 마세요.
-const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+const SUPABASE_URL = "https://zlaiquivnuluglchqlbr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_JMTnzgv6xVYkeTIExhNl2Q_QaIVgAYC";
 const BUCKET = "coord-images";
 const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/coord-manage`;
 
