@@ -189,9 +189,9 @@ Deno.serve(async (req) => {
         await removeImages(supabase, uploaded);
         throw err;
       }
-      const oldPaths: string[] = [];
-      if (frontPath !== current.front_image_path) oldPaths.push(current.front_image_path);
-      if (backPath !== current.back_image_path) oldPaths.push(current.back_image_path);
+      const retainedPaths = new Set([frontPath, backPath]);
+      const oldPaths = [...new Set([current.front_image_path, current.back_image_path]
+        .filter(path => path && !retainedPaths.has(path)))];
       await removeImages(supabase, oldPaths);
       return response(200, { ok: true, id, message: "프렌즈카드가 수정되었습니다." });
     }
