@@ -308,23 +308,52 @@ gallery.addEventListener("keydown", e => { if((e.key==="Enter"||e.key===" ") && 
 document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
 loadCoords();
 
-document.querySelector("#adminModeButton").addEventListener("click", async () => {
+const adminDialog = document.querySelector("#adminDialog");
+const adminForm = document.querySelector("#adminForm");
+const adminPasswordInput = document.querySelector("#adminPasswordInput");
+const adminMessage = document.querySelector("#adminMessage");
+
+document.querySelector("#adminModeButton").addEventListener("click", () => {
   if (adminMode) {
-    adminMode = false; adminPassword = "";
+    adminMode = false;
+    adminPassword = "";
     document.querySelector("#adminModeButton").classList.remove("active");
     document.querySelector("#adminModeButton").textContent = "관리자 모드";
     render();
     if (currentDetailId && detailDialog.open) openDetail(currentDetailId);
     return;
   }
-  const entered = window.prompt("관리자 비밀번호를 입력해 주세요.");
-  if (!entered) return;
-  const data = new FormData(); data.append("action", "admin-auth"); data.append("admin_password", entered);
+  adminForm.reset();
+  adminMessage.textContent = "";
+  adminDialog.showModal();
+  adminPasswordInput.focus();
+});
+
+adminForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const entered = adminPasswordInput.value;
+  if (!entered) {
+    adminMessage.textContent = "관리자 비밀번호를 입력해 주세요.";
+    return;
+  }
+  const submit = adminForm.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  adminMessage.textContent = "관리자 인증 중…";
+  const data = new FormData();
+  data.append("action", "admin-auth");
+  data.append("admin_password", entered);
   const result = await callFunction(data);
-  if (!result.ok) { window.alert(result.error || "관리자 인증에 실패했습니다."); return; }
-  adminPassword = entered; adminMode = true;
+  submit.disabled = false;
+  if (!result.ok) {
+    adminMessage.textContent = result.error || "관리자 인증에 실패했습니다.";
+    return;
+  }
+  adminPassword = entered;
+  adminMode = true;
   const button = document.querySelector("#adminModeButton");
-  button.classList.add("active"); button.textContent = "관리자 모드 켜짐 · 끄기";
+  button.classList.add("active");
+  button.textContent = "관리자 모드 켜짐 · 끄기";
+  adminDialog.close();
   render();
   window.alert("관리자 모드가 켜졌습니다. 이제 모든 카드의 수정·삭제가 가능합니다.");
 });
