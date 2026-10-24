@@ -85,6 +85,15 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    const adminPassword = String(form.get("admin_password") ?? "");
+    const configuredAdminPassword = Deno.env.get("FRIENDS_CARD_ADMIN_PASSWORD") ?? "";
+    const isAdmin = configuredAdminPassword.length >= 8 && adminPassword.length > 0 && constantTimeEqual(adminPassword, configuredAdminPassword);
+
+    if (action === "admin-auth") {
+      if (!isAdmin) return response(403, { error: "관리자 비밀번호가 올바르지 않습니다. 서버의 FRIENDS_CARD_ADMIN_PASSWORD 설정을 확인해 주세요." });
+      return response(200, { ok: true, message: "관리자 인증에 성공했습니다." });
+    }
+
     if (action === "create") {
       const nameKo = text(form, "name_ko", 100);
       const nameJa = text(form, "name_ja", 100);
@@ -136,11 +145,13 @@ Deno.serve(async (req) => {
       if (!/^[0-9a-f-]{36}$/i.test(id)) return response(400, { error: "코디 ID가 올바르지 않습니다." });
       if (password.length < 4 || password.length > 200) return response(400, { error: "등록 비밀번호를 4자 이상 입력해 주세요." });
 
-      const { data: credential, error: credentialError } = await supabase
-        .from("coord_credentials").select("password_salt,password_hash").eq("coord_id", id).maybeSingle();
-      if (credentialError || !credential) return response(404, { error: "프렌즈카드를 찾을 수 없거나 비밀번호 정보가 없습니다." });
-      const valid = await verifyPassword(password, credential.password_salt, credential.password_hash);
-      if (!valid) return response(403, { error: "비밀번호가 일치하지 않습니다." });
+      if (!isAdmin) {
+        const { data: credential, error: credentialError } = await supabase
+          .from("coord_credentials").select("password_salt,password_hash").eq("coord_id", id).maybeSingle();
+        if (credentialError || !credential) return response(404, { error: "프렌즈카드를 찾을 수 없거나 비밀번호 정보가 없습니다." });
+        const valid = await verifyPassword(password, credential.password_salt, credential.password_hash);
+        if (!valid) return response(403, { error: "비밀번호가 일치하지 않습니다." });
+      }
 
       const { data: current, error: currentError } = await supabase.from("friends_card")
         .select("front_image_path,back_image_path").eq("id", id).maybeSingle();
