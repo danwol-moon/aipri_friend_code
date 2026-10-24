@@ -78,7 +78,7 @@ function render() {
         <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지" loading="lazy">
         ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지" loading="lazy">`}
       </div>
-      <div class="card-body"><span class="tag">${escapeHtml(String(item.tag || "").split(",").join(" · "))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div>${item.character_owner?`<p class="card-extra"><strong>기타</strong><br>${escapeHtml(item.character_owner)}</p>`:""}</div>
+      <div class="card-body"><span class="tag">${escapeHtml(String(item.tag || "").split(",").join(" · "))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div>${item.character_owner?`<p class="card-extra"><strong>기타</strong><br>${escapeHtml(item.character_owner)}</p>`:""}${adminMode?`<div class="admin-card-actions"><button type="button" data-admin-edit="${escapeHtml(item.id)}">수정</button><button type="button" class="danger-button" data-admin-delete="${escapeHtml(item.id)}">삭제</button></div>`:""}</div>
     </article>`).join("");
 }
 function similarity(a,b) {
@@ -102,6 +102,7 @@ function findSimilar(item) {
 function openDetail(id) {
   const item = coords.find(x => x.id === id);
   if (!item) return;
+  if (adminMode) { openEditForm(item, adminPassword, true); return; }
   currentDetailId = id;
   const similar = findSimilar(item);
   document.querySelector("#detailContent").innerHTML = `
@@ -279,7 +280,29 @@ registerForm.addEventListener("submit", async e => {
   await loadCoords();
 });
 document.querySelector("#openRegister").addEventListener("click", openCreateForm);
-gallery.addEventListener("click", e => { const card=e.target.closest("[data-id]"); if(card) openDetail(card.dataset.id); });
+gallery.addEventListener("click", async e => {
+  const editButton = e.target.closest("[data-admin-edit]");
+  if (editButton && adminMode) {
+    e.stopPropagation();
+    const item = coords.find(x => x.id === editButton.dataset.adminEdit);
+    if (item) openEditForm(item, adminPassword, true);
+    return;
+  }
+  const deleteButton = e.target.closest("[data-admin-delete]");
+  if (deleteButton && adminMode) {
+    e.stopPropagation();
+    const item = coords.find(x => x.id === deleteButton.dataset.adminDelete);
+    if (!item || !confirm(`「${bestName(item)}」프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.`)) return;
+    const data = new FormData();
+    data.append("action", "delete"); data.append("id", item.id); data.append("admin_password", adminPassword);
+    const result = await callFunction(data);
+    if (result.ok) await loadCoords();
+    else alert(result.error || "삭제하지 못했습니다.");
+    return;
+  }
+  const card=e.target.closest("[data-id]");
+  if(card) openDetail(card.dataset.id);
+});
 gallery.addEventListener("keydown", e => { if((e.key==="Enter"||e.key===" ") && e.target.matches("[data-id]")){e.preventDefault();openDetail(e.target.dataset.id);} });
 [searchInput,tagFilter,sortFilter].forEach(el=>el.addEventListener("input",render));
 document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
