@@ -245,7 +245,7 @@ registerForm.addEventListener("submit", async e => {
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
   if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
   if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
-  if (String(data.get("password")||"").length < 4) { formMessage.textContent = "비밀번호는 4자 이상 입력해 주세요."; return; }
+  if (registerForm.dataset.adminEdit !== "true" && String(data.get("password")||"").length < 4) { formMessage.textContent = "비밀번호는 4자 이상 입력해 주세요."; return; }
   const missingFields = [];
   if (!String(data.get("nameKo") || "").trim()) missingFields.push("코디 이름 (한국어)");
   if (!String(data.get("nameJa") || "").trim()) missingFields.push("코디 이름 (일본어)");
