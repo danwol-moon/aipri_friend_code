@@ -76,7 +76,7 @@ function render() {
         <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지" loading="lazy">
         ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지" loading="lazy">`}
       </div>
-      <div class="card-body"><span class="tag">${escapeHtml(String(item.tag || "").split(",").join(" · "))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div></div>
+      <div class="card-body"><span class="tag">${escapeHtml(String(item.tag || "").split(",").join(" · "))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div>${item.character_owner?`<p class="card-extra"><strong>기타</strong><br>${escapeHtml(item.character_owner)}</p>`:""}</div>
     </article>`).join("");
 }
 function similarity(a,b) {
@@ -111,7 +111,7 @@ function openDetail(id) {
     <div class="detail-info">
       <p><strong>코디 이름 (일본어)</strong><br>${escapeHtml(item.name_ja || "—")}</p><p><strong>태그</strong><br>${escapeHtml(String(item.tag || "").split(",").join(" · ") || "—")}</p>
       <p><strong>X ID</strong><br>${escapeHtml(item.x_id || "—")}</p><p><strong>마이캐릭터</strong><br>${escapeHtml(item.my_character || "—")}</p>
-      ${item.character_owner?'<p><strong>대행 프카 정보</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
+      ${item.character_owner?'<p><strong>기타</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
     </div>
     <div class="recommendations"><h3>✧ 이로치 후보 추천</h3><p>${similar.length ? similar.map(x=>escapeHtml(bestName(x))+" ("+Math.round(x.score*100)+"% 유사)").join(" · ") : "비교할 만한 코디가 아직 없어요."}<br><br>이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
     <div class="recommendations"><h3>등록자 관리</h3><p>등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요.</p>
