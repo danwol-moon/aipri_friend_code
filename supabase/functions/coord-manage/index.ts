@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     if (action === "update" || action === "delete") {
       const id = text(form, "id", 60);
       if (!/^[0-9a-f-]{36}$/i.test(id)) return response(400, { error: "코디 ID가 올바르지 않습니다." });
-      if (password.length < 4 || password.length > 200) return response(400, { error: "등록 비밀번호를 4자 이상 입력해 주세요." });
+      if (!isAdmin && (password.length < 4 || password.length > 200)) return response(400, { error: "등록 비밀번호를 4자 이상 입력해 주세요." });
 
       if (!isAdmin) {
         const { data: credential, error: credentialError } = await supabase
