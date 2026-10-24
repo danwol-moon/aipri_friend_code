@@ -23,3 +23,14 @@
 .similar-card-score{font-size:10px;color:#a74d8d}
 .recommendations .recommendation-note{margin-top:10px;font-size:10px;color:#95849b}
 @media(max-width:560px){.similar-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.similar-card-name{font-size:12px}}
+
+/* 이로치 후보는 가로 스크롤로 모두 탐색 */
+.similar-card-grid{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:4px 2px 12px;scroll-snap-type:x mandatory;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.similar-card{flex:0 0 150px;scroll-snap-align:start}
+.similar-card-grid::-webkit-scrollbar{height:6px}
+.similar-card-grid::-webkit-scrollbar-thumb{background:#e5c5df;border-radius:999px}
+.similar-card-grid::-webkit-scrollbar-track{background:#f9eff7;border-radius:999px}
+/* 상세 이미지가 가로형일 때 이미지 영역 중앙 정렬 */
+.detail-images{align-items:center;justify-items:center}
+.detail-images img{display:block;max-width:100%;height:auto;max-height:360px;align-self:center;justify-self:center}
+@media(max-width:560px){.similar-card{flex-basis:135px}}
