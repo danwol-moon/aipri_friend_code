@@ -313,6 +313,7 @@ document.querySelector("#adminModeButton").addEventListener("click", async () =>
     adminMode = false; adminPassword = "";
     document.querySelector("#adminModeButton").classList.remove("active");
     document.querySelector("#adminModeButton").textContent = "관리자 모드";
+    render();
     if (currentDetailId && detailDialog.open) openDetail(currentDetailId);
     return;
   }
@@ -324,5 +325,6 @@ document.querySelector("#adminModeButton").addEventListener("click", async () =>
   adminPassword = entered; adminMode = true;
   const button = document.querySelector("#adminModeButton");
   button.classList.add("active"); button.textContent = "관리자 모드 켜짐 · 끄기";
+  render();
   window.alert("관리자 모드가 켜졌습니다. 이제 모든 카드의 수정·삭제가 가능합니다.");
 });
