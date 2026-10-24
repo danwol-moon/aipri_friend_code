@@ -117,13 +117,23 @@ function openDetail(id) {
       <p><strong>X ID</strong><br>${escapeHtml(item.x_id || "—")}</p><p><strong>마이캐릭터</strong><br>${escapeHtml(item.my_character || "—")}</p>
       ${item.character_owner?'<p><strong>기타</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
     </div>
-    <div class="recommendations"><h3>✧ 이로치 후보 추천</h3><p>${similar.length ? similar.map(x=>escapeHtml(bestName(x))+" ("+Math.round(x.score*100)+"% 유사)").join(" · ") : "비교할 만한 코디가 아직 없어요."}<br><br>이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
+    <div class="recommendations"><h3>✧ 이로치 후보 추천</h3>
+      ${similar.length ? `<div class="similar-card-grid">${similar.map(x => `<a class="similar-card" href="#gallery" data-similar-id="${escapeHtml(x.id)}" aria-label="${escapeHtml(bestName(x))} 상세 보기"><img src="${escapeHtml(imageUrl(x.front_image_path))}" alt="${escapeHtml(bestName(x))}" loading="lazy"><span class="similar-card-name">${escapeHtml(bestName(x))}</span><span class="similar-card-score">${Math.round(x.score*100)}% 유사</span></a>`).join("")}</div>` : `<p>비교할 만한 코디가 아직 없어요.</p>`} 
+      <p class="recommendation-note">이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
     <div class="recommendations"><h3>${adminMode ? "관리자 편집" : "등록자 관리"}</h3><p>${adminMode ? "관리자 모드가 켜져 있어 이 카드를 편집할 수 있어요." : "등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요."}</p>
       <label class="owner-password-label">${adminMode ? "관리자 모드 활성화됨" : "등록 비밀번호"}<input id="ownerPassword" type="password" autocomplete="current-password" placeholder="${adminMode ? "관리자 권한으로 처리됩니다" : "등록할 때 설정한 비밀번호"}" ${adminMode ? "disabled" : ""}></label>
       <div class="owner-actions"><button class="primary" id="editCoordButton" type="button">수정하기</button><button class="danger-button" id="deleteCoordButton" type="button">삭제하기</button></div>
       <p id="ownerMessage" class="form-message" role="status"></p>
     </div>`;
   detailDialog.showModal();
+  document.querySelectorAll("[data-similar-id]").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      const targetId = link.dataset.similarId;
+      detailDialog.close();
+      openDetail(targetId);
+    });
+  });
   document.querySelector("#editCoordButton").addEventListener("click", () => {
     const password = adminMode ? adminPassword : document.querySelector("#ownerPassword").value;
     if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
