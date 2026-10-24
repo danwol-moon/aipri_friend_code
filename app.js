@@ -159,7 +159,8 @@ async function callFunction(formData) {
   }
 }
 function resetFileRequirements(isEdit) {
-  registerForm.elements.front.required = false;
+  // 새 카드 등록 시에는 프렌즈카드 이미지가 필수이며, 수정 시에는 기존 이미지를 유지할 수 있어요.
+  registerForm.elements.front.required = !isEdit;
   registerForm.elements.back.required = false;
 }
 function resetImagePreviews() {
@@ -191,12 +192,27 @@ function setupImagePreviews() {
         box.classList.remove("has-preview");
         return;
       }
-      const objectUrl = URL.createObjectURL(file);
-      preview.src = objectUrl;
-      preview.dataset.objectUrl = objectUrl;
-      preview.hidden = false;
-      if (hint) hint.hidden = true;
-      box.classList.add("has-preview");
+      if (!file.type.startsWith("image/")) {
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        if (hint) { hint.hidden = false; hint.textContent = "이미지 파일을 선택해 주세요."; }
+        box.classList.remove("has-preview");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = String(reader.result || "");
+        preview.hidden = false;
+        if (hint) hint.hidden = true;
+        box.classList.add("has-preview");
+      };
+      reader.onerror = () => {
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        if (hint) { hint.hidden = false; hint.textContent = "미리보기를 불러오지 못했어요. 다른 이미지를 선택해 주세요."; }
+        box.classList.remove("has-preview");
+      };
+      reader.readAsDataURL(file);
     });
   });
 }
@@ -242,7 +258,7 @@ registerForm.addEventListener("submit", async e => {
   const data = new FormData(registerForm);
   const front = data.get("front"), back = data.get("back");
   const tags = data.getAll("tag").map(value => String(value)).filter(Boolean);
-  if (!currentEditId && !front?.size && !back?.size) { formMessage.textContent = "프렌즈카드 이미지 또는 코디 이미지 중 하나 이상 선택해 주세요."; return; }
+  if (!currentEditId && !front?.size) { formMessage.textContent = "프렌즈카드 이미지는 필수 사항이에요. 이미지를 선택해 주세요."; return; }
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
   if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
   if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
