@@ -420,6 +420,22 @@ const adminDialog = document.querySelector("#adminDialog");
 const adminForm = document.querySelector("#adminForm");
 const adminPasswordInput = document.querySelector("#adminPasswordInput");
 const adminMessage = document.querySelector("#adminMessage");
+const ADMIN_MAX_ATTEMPTS = 5;
+const ADMIN_LOCK_KEY = "friends-card-admin-lock-v1";
+let adminFailedAttempts = Number(sessionStorage.getItem(ADMIN_LOCK_KEY) || 0);
+
+function syncAdminLockMessage() {
+  if (adminFailedAttempts >= ADMIN_MAX_ATTEMPTS) {
+    adminPasswordInput.disabled = true;
+    adminForm.querySelector('button[type="submit"]').disabled = true;
+    adminMessage.textContent = "로그인 시도 횟수 5회를 초과해 잠겼습니다. 페이지를 새로고침해도 잠금은 유지됩니다.";
+    return true;
+  }
+  adminPasswordInput.disabled = false;
+  adminForm.querySelector('button[type="submit"]').disabled = false;
+  return false;
+}
+syncAdminLockMessage();
 
 document.querySelector("#adminModeButton").addEventListener("click", () => {
   if (adminMode) {
@@ -431,6 +447,10 @@ document.querySelector("#adminModeButton").addEventListener("click", () => {
     if (currentDetailId && detailDialog.open) openDetail(currentDetailId);
     return;
   }
+  if (syncAdminLockMessage()) {
+    adminDialog.showModal();
+    return;
+  }
   adminForm.reset();
   adminMessage.textContent = "";
   adminDialog.showModal();
@@ -439,6 +459,7 @@ document.querySelector("#adminModeButton").addEventListener("click", () => {
 
 adminForm.addEventListener("submit", async e => {
   e.preventDefault();
+  if (syncAdminLockMessage()) return;
   const entered = adminPasswordInput.value;
   if (!entered) {
     adminMessage.textContent = "관리자 비밀번호를 입력해 주세요.";
@@ -453,9 +474,17 @@ adminForm.addEventListener("submit", async e => {
   const result = await callFunction(data);
   submit.disabled = false;
   if (!result.ok) {
-    adminMessage.textContent = result.error || "관리자 인증에 실패했습니다.";
+    adminFailedAttempts += 1;
+    sessionStorage.setItem(ADMIN_LOCK_KEY, String(adminFailedAttempts));
+    if (adminFailedAttempts >= ADMIN_MAX_ATTEMPTS) {
+      syncAdminLockMessage();
+    } else {
+      adminMessage.textContent = "관리자 비밀번호가 올바르지 않습니다. 5번 이상 틀릴 시 로그인에 제한됩니다.";
+    }
     return;
   }
+  adminFailedAttempts = 0;
+  sessionStorage.removeItem(ADMIN_LOCK_KEY);
   adminPassword = entered;
   adminMode = true;
   const button = document.querySelector("#adminModeButton");
