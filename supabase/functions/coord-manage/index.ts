@@ -45,6 +45,14 @@ async function verifyPassword(password: string, salt: string, expected: string):
   const candidate = await hashPassword(password, salt);
   return constantTimeEqual(candidate.hash, expected);
 }
+function validImageUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
 function extensionFor(file: File): string | null {
   const map: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
   return map[file.type] ?? null;
@@ -63,7 +71,7 @@ async function uploadImage(supabase: ReturnType<typeof createClient>, coordId: s
   return path;
 }
 async function removeImages(supabase: ReturnType<typeof createClient>, paths: string[]) {
-  const valid = [...new Set(paths.filter(Boolean))];
+  const valid = [...new Set(paths.filter((path) => Boolean(path) && !/^https?:\/\//i.test(path)))];
   if (!valid.length) return;
   const { error } = await supabase.storage.from(BUCKET).remove(valid);
   if (error) console.error("Storage cleanup failed", error.message);
@@ -103,17 +111,23 @@ Deno.serve(async (req) => {
       const backValue = form.get("back");
       const front = frontValue instanceof File && frontValue.size > 0 ? frontValue : null;
       const back = backValue instanceof File && backValue.size > 0 ? backValue : null;
+      const frontUrl = text(form, "front_url", 2000);
+      const backUrl = text(form, "back_url", 2000);
       if (!nameKo && !nameJa) return response(400, { error: "한국어 또는 일본어 코디 이름을 입력해 주세요." });
       if (!tags.length || tags.some(value => !ALLOWED_TAGS.has(value))) return response(400, { error: "태그를 하나 이상 올바르게 선택해 주세요." });
       if (password.length < 4 || password.length > 200) return response(400, { error: "비밀번호는 4~200자로 입력해 주세요." });
-      if (!front && !back) return response(400, { error: "프렌즈카드 이미지 또는 코디 이미지 중 하나 이상 선택해 주세요." });
+      if (!front && !frontUrl) return response(400, { error: "프렌즈카드 이미지는 필수입니다. 이미지 파일 또는 URL을 입력해 주세요." });
+      if (frontUrl && !validImageUrl(frontUrl)) return response(400, { error: "프렌즈카드 이미지 URL이 올바르지 않습니다." });
+      if (backUrl && !validImageUrl(backUrl)) return response(400, { error: "코디 이미지 URL이 올바르지 않습니다." });
 
       const id = crypto.randomUUID();
       let frontPath = "";
       let backPath = "";
       try {
         if (front) frontPath = await uploadImage(supabase, id, "front", front);
+        else if (frontUrl) frontPath = frontUrl;
         if (back) backPath = await uploadImage(supabase, id, "back", back);
+        else if (backUrl) backPath = backUrl;
         if (!frontPath) frontPath = backPath;
         if (!backPath) backPath = frontPath;
         const { error: insertError } = await supabase.from("friends_card").insert({
@@ -178,13 +192,21 @@ Deno.serve(async (req) => {
       try {
         const front = form.get("front");
         const back = form.get("back");
+        const frontUrl = text(form, "front_url", 2000);
+        const backUrl = text(form, "back_url", 2000);
+        if (frontUrl && !validImageUrl(frontUrl)) return response(400, { error: "프렌즈카드 이미지 URL이 올바르지 않습니다." });
+        if (backUrl && !validImageUrl(backUrl)) return response(400, { error: "코디 이미지 URL이 올바르지 않습니다." });
         if (front instanceof File && front.size > 0) {
           frontPath = await uploadImage(supabase, id, "front", front);
           uploaded.push(frontPath);
+        } else if (frontUrl) {
+          frontPath = frontUrl;
         }
         if (back instanceof File && back.size > 0) {
           backPath = await uploadImage(supabase, id, "back", back);
           uploaded.push(backPath);
+        } else if (backUrl) {
+          backPath = backUrl;
         }
         const { error: updateError } = await supabase.from("friends_card").update({
           name_ko: nameKo, name_ja: nameJa, tag,
