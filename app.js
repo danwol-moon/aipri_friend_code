@@ -161,7 +161,8 @@ async function callFunction(formData) {
 }
 function resetFileRequirements(isEdit) {
   registerForm.elements.front.required = false;
-  registerForm.elements.frontUrl.required = !isEdit;
+  // 파일 업로드 또는 URL 중 하나를 허용하므로 개별 입력란은 required로 고정하지 않아요.
+  registerForm.elements.frontUrl.required = false;
   registerForm.elements.back.required = false;
   registerForm.elements.frontUrl.setCustomValidity("");
 }
@@ -324,7 +325,6 @@ registerForm.addEventListener("submit", async e => {
   for (const [label, value] of [["프렌즈카드 이미지", frontUrl], ["코디 이미지", backUrl]]) {
     if (value) { try { const parsed = new URL(value); if (!["http:","https:"].includes(parsed.protocol)) throw new Error(); } catch { formMessage.textContent = `${label} 주소는 http:// 또는 https://로 시작하는 올바른 URL이어야 해요.`; return; } }
   }
-  if (!currentEditId && !front?.size && !frontUrl) { formMessage.textContent = "프렌즈카드 이미지는 필수예요."; return; }
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
   if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
   if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
