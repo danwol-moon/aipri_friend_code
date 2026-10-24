@@ -44,8 +44,8 @@
     <p class="eyebrow">ADD YOUR FRIEND CARD</p><h2>프렌즈카드 등록하기</h2>
     <form id="registerForm">
       <div class="image-fields">
-        <label class="upload-box"><span class="upload-icon">＋</span><strong>프렌즈카드 이미지 <span class="required-mark">(필수)</span></strong><small class="upload-hint">이미지 파일 선택 (필수)</small><img class="upload-preview" alt="프렌즈카드 이미지 미리보기" hidden><input name="front" type="file" accept="image/*"></label>
-        <label class="upload-box"><span class="upload-icon">＋</span><strong>코디 이미지</strong><small class="upload-hint">이미지 파일 선택 (선택 사항)</small><img class="upload-preview" alt="코디 이미지 미리보기" hidden><input name="back" type="file" accept="image/*"></label>
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>프렌즈카드 이미지 <span class="required-mark">(필수)</span></strong><small class="upload-hint">파일을 선택하거나 이미지 주소를 입력해 주세요.</small><img class="upload-preview" alt="프렌즈카드 이미지 미리보기" hidden><input name="front" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><input name="frontUrl" type="url" class="image-url-input" placeholder="또는 이미지 주소 URL 붙여넣기" aria-label="프렌즈카드 이미지 주소"></label>
+        <label class="upload-box"><span class="upload-icon">＋</span><strong>코디 이미지</strong><small class="upload-hint">선택 사항 · 파일 또는 이미지 주소</small><img class="upload-preview" alt="코디 이미지 미리보기" hidden><input name="back" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><input name="backUrl" type="url" class="image-url-input" placeholder="또는 이미지 주소 URL 붙여넣기" aria-label="코디 이미지 주소"></label>
       </div>
       <div class="form-grid">
         <label>코디 이름 (한국어)<input name="nameKo" maxlength="100" placeholder="팝핀 하트 바즈리움"></label>
@@ -63,7 +63,7 @@
         <label class="wide">기타<input name="characterOwner" maxlength="100" placeholder="00대행 A캐릭터, 이름 공개 불가 등 자유롭게 작성"></label>
         <label class="wide">수정·삭제 비밀번호<input name="password" type="password" minlength="4" autocomplete="new-password" required placeholder="4자 이상 · 등록 후 비밀번호 입력 시 수정/삭제 가능"></label>
       </div>
-      <p class="form-note">이미지는 한 장만 등록해도 돼요. JPG, PNG, WEBP, GIF 파일을 각각 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.</p>
+      <p class="form-note">프렌즈카드 이미지는 필수예요. 파일을 올리거나 이미지 주소(URL)를 입력해 주세요. 코디 이미지는 선택 사항이며 파일은 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.</p>
       <button class="primary full" type="submit">프렌즈카드 등록하기</button>
       <p id="formMessage" class="form-message" role="status"></p>
     </form>
