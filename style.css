@@ -10,3 +10,5 @@
 .admin-card-actions{display:flex;gap:7px;margin-top:12px}.admin-card-actions button{flex:1;border:1px solid #e7c5dc;border-radius:9px;padding:8px 6px;background:#fff;color:#a74d8d;font-size:12px;font-weight:700;cursor:pointer}.admin-card-actions .danger-button{background:#fff4f7;color:#b33b68;border-color:#efb4c7}.admin-card-actions button:hover{filter:brightness(.97)}
 
 .required-mark{color:#c34f8a;font-size:11px;font-weight:700}.upload-box.has-preview{justify-content:flex-start}.upload-box.has-preview .upload-preview{flex:1;min-height:120px;max-height:190px;object-fit:contain}
+
+.image-url-input{width:100%;max-width:100%;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;color:var(--ink);font-size:11px;box-sizing:border-box}.image-url-input:focus{outline:2px solid #efa5cf;outline-offset:1px}.upload-box.preview-error{border-color:#d88aa8;background:#fff0f5}.upload-box.has-preview .image-url-input{margin-top:2px}
