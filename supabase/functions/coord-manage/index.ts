@@ -70,6 +70,31 @@ async function uploadImage(supabase: ReturnType<typeof createClient>, coordId: s
   if (error) throw new Error("이미지 업로드에 실패했습니다: " + error.message);
   return path;
 }
+async function uploadRemoteImage(supabase: ReturnType<typeof createClient>, coordId: string, role: "front" | "back", url: string) {
+  let remote: Response;
+  try {
+    remote = await fetch(url, { headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,image/gif,*/*;q=0.8" } });
+  } catch {
+    throw new Error("이미지 주소에 접속할 수 없습니다. 이미지 파일을 직접 업로드해 주세요.");
+  }
+  if (!remote.ok) throw new Error(`이미지 주소에서 파일을 가져오지 못했습니다 (HTTP ${remote.status}). 파일을 직접 업로드해 주세요.`);
+  const contentType = (remote.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+  const ext = extByType[contentType];
+  if (!ext || !ALLOWED_TYPES.has(contentType)) throw new Error("주소가 이미지 파일을 반환하지 않습니다. JPG, PNG, WEBP, GIF 이미지의 직접 주소를 사용해 주세요.");
+  const declaredSize = Number(remote.headers.get("content-length") ?? "0");
+  if (declaredSize > MAX_IMAGE_BYTES) throw new Error("URL 이미지도 5MB 이하만 등록할 수 있습니다.");
+  const bytes = new Uint8Array(await remote.arrayBuffer());
+  if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new Error("URL 이미지도 5MB 이하만 등록할 수 있습니다.");
+  const path = `${coordId}/${role}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
+    contentType,
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (error) throw new Error("URL 이미지 저장에 실패했습니다: " + error.message);
+  return path;
+}
 async function removeImages(supabase: ReturnType<typeof createClient>, paths: string[]) {
   const valid = [...new Set(paths.filter((path) => Boolean(path) && !/^https?:\/\//i.test(path)))];
   if (!valid.length) return;
@@ -125,9 +150,9 @@ Deno.serve(async (req) => {
       let backPath = "";
       try {
         if (front) frontPath = await uploadImage(supabase, id, "front", front);
-        else if (frontUrl) frontPath = frontUrl;
+        else if (frontUrl) frontPath = await uploadRemoteImage(supabase, id, "front", frontUrl);
         if (back) backPath = await uploadImage(supabase, id, "back", back);
-        else if (backUrl) backPath = backUrl;
+        else if (backUrl) backPath = await uploadRemoteImage(supabase, id, "back", backUrl);
         if (!frontPath) frontPath = backPath;
         if (!backPath) backPath = frontPath;
         const { error: insertError } = await supabase.from("friends_card").insert({
