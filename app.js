@@ -279,6 +279,8 @@ setupImagePreviews();
 function openCreateForm() {
   currentEditId = null;
   registerForm.reset();
+  registerForm.elements.password.required = true;
+  delete registerForm.dataset.adminEdit;
   resetImagePreviews();
   resetFileRequirements(false);
   formMessage.textContent = "";
@@ -301,6 +303,8 @@ function openEditForm(item, password, isAdmin = false) {
   if (/^https?:\/\//i.test(String(item.front_image_path || ""))) registerForm.elements.frontUrl.value = item.front_image_path;
   if (item.back_image_path && item.back_image_path !== item.front_image_path && /^https?:\/\//i.test(String(item.back_image_path))) registerForm.elements.backUrl.value = item.back_image_path;
   registerForm.elements.password.value = isAdmin ? "" : password;
+  // 관리자 수정은 기존 등록 비밀번호가 필요 없으므로 브라우저의 required 검사를 해제합니다.
+  registerForm.elements.password.required = !isAdmin;
   registerForm.dataset.adminEdit = isAdmin ? "true" : "false";
   resetFileRequirements(true);
   formMessage.textContent = "사진을 선택하지 않으면 기존 이미지를 유지합니다.";
@@ -361,6 +365,7 @@ registerForm.addEventListener("submit", async e => {
   if (!result.ok) { formMessage.textContent = result.error || "저장하지 못했습니다."; return; }
   registerDialog.close();
   delete registerForm.dataset.adminEdit;
+  registerForm.elements.password.required = true;
   await loadCoords();
 });
 document.querySelector("#openRegister").addEventListener("click", openCreateForm);
