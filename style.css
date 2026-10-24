@@ -41,3 +41,9 @@
 /* 상세 이미지의 투명 영역은 이미지 요소 자체가 아닌 각 이미지 칸의 흰색 바탕으로 비치게 함 */
 .detail-images{background:#fff}
 .detail-images img{background-color:#fff !important; mix-blend-mode:normal}
+
+/* 카드 목록에서 코디 이미지(PNG 등)의 투명 영역 아래에 흰색 바탕을 둡니다. */
+.card-images img[alt="코디 이미지"] {
+  background-color: #FFFFFF !important;
+  display: block;
+}
