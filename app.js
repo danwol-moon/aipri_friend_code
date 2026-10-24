@@ -19,6 +19,8 @@ const formMessage = document.querySelector("#formMessage");
 let coords = [];
 let currentEditId = null;
 let currentDetailId = null;
+let adminMode = false;
+let adminPassword = "";
 
 function isConfigured() {
   return SUPABASE_URL.startsWith("https://") &&
@@ -114,24 +116,24 @@ function openDetail(id) {
       ${item.character_owner?'<p><strong>기타</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
     </div>
     <div class="recommendations"><h3>✧ 이로치 후보 추천</h3><p>${similar.length ? similar.map(x=>escapeHtml(bestName(x))+" ("+Math.round(x.score*100)+"% 유사)").join(" · ") : "비교할 만한 코디가 아직 없어요."}<br><br>이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
-    <div class="recommendations"><h3>등록자 관리</h3><p>등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요.</p>
-      <label class="owner-password-label">등록 비밀번호<input id="ownerPassword" type="password" autocomplete="current-password" placeholder="등록할 때 설정한 비밀번호"></label>
+    <div class="recommendations"><h3>${adminMode ? "관리자 편집" : "등록자 관리"}</h3><p>${adminMode ? "관리자 모드가 켜져 있어 이 카드를 편집할 수 있어요." : "등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요."}</p>
+      <label class="owner-password-label">${adminMode ? "관리자 모드 활성화됨" : "등록 비밀번호"}<input id="ownerPassword" type="password" autocomplete="current-password" placeholder="${adminMode ? "관리자 권한으로 처리됩니다" : "등록할 때 설정한 비밀번호"}" ${adminMode ? "disabled" : ""}></label>
       <div class="owner-actions"><button class="primary" id="editCoordButton" type="button">수정하기</button><button class="danger-button" id="deleteCoordButton" type="button">삭제하기</button></div>
       <p id="ownerMessage" class="form-message" role="status"></p>
     </div>`;
   detailDialog.showModal();
   document.querySelector("#editCoordButton").addEventListener("click", () => {
-    const password = document.querySelector("#ownerPassword").value;
+    const password = adminMode ? adminPassword : document.querySelector("#ownerPassword").value;
     if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
     detailDialog.close();
-    openEditForm(item, password);
+    openEditForm(item, password, adminMode);
   });
   document.querySelector("#deleteCoordButton").addEventListener("click", async () => {
-    const password = document.querySelector("#ownerPassword").value;
+    const password = adminMode ? adminPassword : document.querySelector("#ownerPassword").value;
     if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
     if (!confirm("이 프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
     const data = new FormData();
-    data.append("action","delete"); data.append("id",item.id); data.append("password",password);
+    data.append("action","delete"); data.append("id",item.id); if (adminMode) data.append("admin_password", password); else data.append("password", password);
     setOwnerMessage("비밀번호 확인 및 삭제 중…");
     const result = await callFunction(data);
     if (result.ok) { detailDialog.close(); await loadCoords(); }
@@ -209,7 +211,7 @@ function openCreateForm() {
   registerForm.querySelector('button[type="submit"]').textContent = "프렌즈카드 등록하기";
   registerDialog.showModal();
 }
-function openEditForm(item, password) {
+function openEditForm(item, password, isAdmin = false) {
   currentEditId = item.id;
   registerForm.reset();
   resetImagePreviews();
@@ -220,7 +222,8 @@ function openEditForm(item, password) {
   registerForm.elements.xId.value = item.x_id || "";
   registerForm.elements.myCharacter.value = item.my_character || "";
   registerForm.elements.characterOwner.value = item.character_owner || "";
-  registerForm.elements.password.value = password;
+  registerForm.elements.password.value = isAdmin ? "" : password;
+  registerForm.dataset.adminEdit = isAdmin ? "true" : "false";
   resetFileRequirements(true);
   formMessage.textContent = "사진을 선택하지 않으면 기존 이미지를 유지합니다.";
   registerDialog.querySelector(".eyebrow").textContent = "EDIT YOUR COORD";
@@ -255,7 +258,8 @@ registerForm.addEventListener("submit", async e => {
   const payload = new FormData();
   payload.append("action", currentEditId ? "update" : "create");
   if (currentEditId) payload.append("id", currentEditId);
-  payload.append("password", String(data.get("password")||""));
+  if (registerForm.dataset.adminEdit === "true") payload.append("admin_password", adminPassword);
+  else payload.append("password", String(data.get("password")||""));
   payload.append("name_ko", String(data.get("nameKo")||"").trim());
   payload.append("name_ja", String(data.get("nameJa")||"").trim());
   payload.append("tag", tags.join(","));
@@ -271,6 +275,7 @@ registerForm.addEventListener("submit", async e => {
   submit.disabled = false;
   if (!result.ok) { formMessage.textContent = result.error || "저장하지 못했습니다."; return; }
   registerDialog.close();
+  delete registerForm.dataset.adminEdit;
   await loadCoords();
 });
 document.querySelector("#openRegister").addEventListener("click", openCreateForm);
@@ -279,3 +284,22 @@ gallery.addEventListener("keydown", e => { if((e.key==="Enter"||e.key===" ") && 
 [searchInput,tagFilter,sortFilter].forEach(el=>el.addEventListener("input",render));
 document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
 loadCoords();
+
+document.querySelector("#adminModeButton").addEventListener("click", async () => {
+  if (adminMode) {
+    adminMode = false; adminPassword = "";
+    document.querySelector("#adminModeButton").classList.remove("active");
+    document.querySelector("#adminModeButton").textContent = "관리자 모드";
+    if (currentDetailId && detailDialog.open) openDetail(currentDetailId);
+    return;
+  }
+  const entered = window.prompt("관리자 비밀번호를 입력해 주세요.");
+  if (!entered) return;
+  const data = new FormData(); data.append("action", "admin-auth"); data.append("admin_password", entered);
+  const result = await callFunction(data);
+  if (!result.ok) { window.alert(result.error || "관리자 인증에 실패했습니다."); return; }
+  adminPassword = entered; adminMode = true;
+  const button = document.querySelector("#adminModeButton");
+  button.classList.add("active"); button.textContent = "관리자 모드 켜짐 · 끄기";
+  window.alert("관리자 모드가 켜졌습니다. 이제 모든 카드의 수정·삭제가 가능합니다.");
+});
