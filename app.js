@@ -413,6 +413,19 @@ gallery.addEventListener("click", async e => {
 });
 gallery.addEventListener("keydown", e => { if((e.key==="Enter"||e.key===" ") && e.target.matches("[data-id]")){e.preventDefault();openDetail(e.target.dataset.id);} });
 [searchInput,tagFilter,sortFilter].forEach(el=>el.addEventListener("input",render));
+
+// 브랜드 로고를 누르면 검색어·필터·정렬을 초기화하고 전체 카드 목록으로 돌아갑니다.
+const brandLink = document.querySelector(".brand");
+if (brandLink) {
+  brandLink.addEventListener("click", event => {
+    event.preventDefault();
+    searchInput.value = "";
+    tagFilter.selectedIndex = 0;
+    sortFilter.selectedIndex = 0;
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
 document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
 loadCoords();
 
