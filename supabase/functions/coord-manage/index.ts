@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     const isAdmin = configuredAdminPassword.length >= 8 && adminPassword.length > 0 && constantTimeEqual(adminPassword, configuredAdminPassword);
 
     if (action === "admin-auth") {
-      if (!isAdmin) return response(403, { error: "관리자 비밀번호가 올바르지 않습니다. 서버의 FRIENDS_CARD_ADMIN_PASSWORD 설정을 확인해 주세요." });
+      if (!isAdmin) return response(403, { error: "관리자 비밀번호가 올바르지 않습니다. 5번 이상 틀릴 시 로그인에 제한됩니다." });
       return response(200, { ok: true, message: "관리자 인증에 성공했습니다." });
     }
 
