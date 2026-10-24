@@ -47,3 +47,9 @@
   background-color: #FFFFFF !important;
   display: block;
 }
+
+/* 카드 목록의 프렌즈카드 이미지와 코디 이미지 모두 투명 영역이 흰색으로 보이도록 처리 */
+.card-images img[alt="프렌즈카드 이미지"],
+.card-images img[alt="코디 이미지"] {
+  background-color: #FFFFFF !important;
+}
