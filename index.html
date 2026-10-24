@@ -27,6 +27,17 @@
     <section id="gallery" class="gallery" aria-live="polite"></section>
     <p id="emptyState" class="empty-state" hidden>아직 등록된 코디가 없어요.<br>첫 번째 코디를 등록해 보세요!</p>
   </main>
+  <dialog id="adminDialog" class="modal admin-modal">
+    <button class="close" data-close="adminDialog" aria-label="닫기">×</button>
+    <p class="eyebrow">ADMINISTRATOR</p>
+    <h2>관리자 모드</h2>
+    <p class="muted">관리자 비밀번호를 입력하면 모든 카드의 수정·삭제 기능을 사용할 수 있어요.</p>
+    <form id="adminForm">
+      <label class="owner-password-label">관리자 비밀번호<input id="adminPasswordInput" name="adminPassword" type="password" autocomplete="current-password" required placeholder="관리자 비밀번호 입력"></label>
+      <button class="primary full" type="submit">관리자 모드 켜기</button>
+      <p id="adminMessage" class="form-message" role="status"></p>
+    </form>
+  </dialog>
   <dialog id="detailDialog" class="modal"><button class="close" data-close="detailDialog" aria-label="닫기">×</button><div id="detailContent"></div></dialog>
   <dialog id="registerDialog" class="modal register-modal">
     <button class="close" data-close="registerDialog" aria-label="닫기">×</button>
