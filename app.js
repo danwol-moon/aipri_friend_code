@@ -32,6 +32,7 @@ function escapeHtml(value = "") {
 }
 function bestName(item) { return item.name_ko || item.name_ja || "이름 없는 프렌즈카드"; }
 function imageUrl(path) {
+  if (/^https?:\/\//i.test(String(path || ""))) return String(path);
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${String(path).split("/").map(encodeURIComponent).join("/")}`;
 }
 async function loadCoords() {
@@ -159,25 +160,53 @@ async function callFunction(formData) {
   }
 }
 function resetFileRequirements(isEdit) {
-  // 새 카드 등록 시에는 프렌즈카드 이미지가 필수이며, 수정 시에는 기존 이미지를 유지할 수 있어요.
-  registerForm.elements.front.required = !isEdit;
+  registerForm.elements.front.required = false;
+  registerForm.elements.frontUrl.required = !isEdit;
   registerForm.elements.back.required = false;
+  registerForm.elements.frontUrl.setCustomValidity("");
 }
 function resetImagePreviews() {
   registerForm.querySelectorAll('input[type="file"][name="front"], input[type="file"][name="back"]').forEach(input => {
     const box = input.closest(".upload-box");
     const preview = box.querySelector(".upload-preview");
     const hint = box.querySelector(".upload-hint");
-    if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
     preview.removeAttribute("src");
-    delete preview.dataset.objectUrl;
     preview.hidden = true;
     if (hint) {
       hint.hidden = false;
-      hint.textContent = input.name === "front" ? "이미지 파일 선택 (필수)" : "이미지 파일 선택 (선택 사항)";
+      hint.textContent = input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+    }
+    box.classList.remove("has-preview", "preview-error");
+  });
+  registerForm.querySelectorAll('input[type="url"][name$="Url"]').forEach(input => { input.value = ""; });
+}
+function showImagePreview(box, source, hintText = "") {
+  const preview = box.querySelector(".upload-preview");
+  const hint = box.querySelector(".upload-hint");
+  preview.onload = () => {
+    preview.hidden = false;
+    if (hint) hint.hidden = true;
+    box.classList.add("has-preview");
+    box.classList.remove("preview-error");
+  };
+  preview.onerror = () => {
+    preview.hidden = true;
+    preview.removeAttribute("src");
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = "이미지를 미리볼 수 없어요. 직접 이미지 링크인지 확인해 주세요.";
     }
     box.classList.remove("has-preview");
-  });
+    box.classList.add("preview-error");
+  };
+  preview.src = source;
+  if (hint && hintText) hint.textContent = hintText;
+  // data URL / cached image can load before onload handlers on some browsers
+  if (preview.complete && preview.naturalWidth > 0) {
+    preview.hidden = false;
+    if (hint) hint.hidden = true;
+    box.classList.add("has-preview");
+  }
 }
 function setupImagePreviews() {
   registerForm.querySelectorAll('input[type="file"][name="front"], input[type="file"][name="back"]').forEach(input => {
@@ -186,29 +215,27 @@ function setupImagePreviews() {
       const preview = box.querySelector(".upload-preview");
       const hint = box.querySelector(".upload-hint");
       const file = input.files?.[0];
-      if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
-      delete preview.dataset.objectUrl;
+      const urlInput = registerForm.elements[input.name === "front" ? "frontUrl" : "backUrl"];
+      if (file && urlInput) urlInput.value = "";
       if (!file) {
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+        }
         preview.removeAttribute("src");
         preview.hidden = true;
-        if (hint) hint.hidden = false;
-        box.classList.remove("has-preview");
+        box.classList.remove("has-preview", "preview-error");
         return;
       }
-      if (!file.type.startsWith("image/")) {
+      if (!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type)) {
         preview.removeAttribute("src");
         preview.hidden = true;
-        if (hint) { hint.hidden = false; hint.textContent = "이미지 파일을 선택해 주세요."; }
+        if (hint) { hint.hidden = false; hint.textContent = "JPG, PNG, WEBP, GIF 파일만 선택할 수 있어요."; }
         box.classList.remove("has-preview");
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => {
-        preview.src = String(reader.result || "");
-        preview.hidden = false;
-        if (hint) hint.hidden = true;
-        box.classList.add("has-preview");
-      };
+      reader.onload = () => showImagePreview(box, String(reader.result || ""));
       reader.onerror = () => {
         preview.removeAttribute("src");
         preview.hidden = true;
@@ -216,6 +243,34 @@ function setupImagePreviews() {
         box.classList.remove("has-preview");
       };
       reader.readAsDataURL(file);
+    });
+  });
+  registerForm.querySelectorAll('input[type="url"][name$="Url"]').forEach(input => {
+    input.addEventListener("input", () => {
+      const box = input.closest(".upload-box");
+      const fileInput = registerForm.elements[input.name === "frontUrl" ? "front" : "back"];
+      if (input.value.trim() && fileInput) fileInput.value = "";
+      const value = input.value.trim();
+      if (!value) {
+        const preview = box.querySelector(".upload-preview");
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        const hint = box.querySelector(".upload-hint");
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = input.name === "frontUrl" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+        }
+        box.classList.remove("has-preview", "preview-error");
+        return;
+      }
+      try {
+        const parsed = new URL(value);
+        if (!["http:","https:"].includes(parsed.protocol)) throw new Error("Invalid protocol");
+        showImagePreview(box, parsed.href);
+      } catch {
+        const hint = box.querySelector(".upload-hint");
+        if (hint) { hint.hidden = false; hint.textContent = "http:// 또는 https://로 시작하는 이미지 주소를 입력해 주세요."; }
+      }
     });
   });
 }
@@ -242,6 +297,8 @@ function openEditForm(item, password, isAdmin = false) {
   registerForm.elements.xId.value = item.x_id || "";
   registerForm.elements.myCharacter.value = item.my_character || "";
   registerForm.elements.characterOwner.value = item.character_owner || "";
+  if (/^https?:\/\//i.test(String(item.front_image_path || ""))) registerForm.elements.frontUrl.value = item.front_image_path;
+  if (item.back_image_path && item.back_image_path !== item.front_image_path && /^https?:\/\//i.test(String(item.back_image_path))) registerForm.elements.backUrl.value = item.back_image_path;
   registerForm.elements.password.value = isAdmin ? "" : password;
   registerForm.dataset.adminEdit = isAdmin ? "true" : "false";
   resetFileRequirements(true);
@@ -260,8 +317,14 @@ registerForm.addEventListener("submit", async e => {
   if (!isConfigured()) { formMessage.textContent = "먼저 app.js에 Supabase URL과 공개용 키를 입력해 주세요."; return; }
   const data = new FormData(registerForm);
   const front = data.get("front"), back = data.get("back");
+  const frontUrl = String(data.get("frontUrl") || "").trim();
+  const backUrl = String(data.get("backUrl") || "").trim();
   const tags = data.getAll("tag").map(value => String(value)).filter(Boolean);
-  if (!currentEditId && !front?.size) { formMessage.textContent = "프렌즈카드 이미지는 필수 사항이에요. 이미지를 선택해 주세요."; return; }
+  if (!currentEditId && !front?.size && !frontUrl) { formMessage.textContent = "프렌즈카드 이미지는 필수예요. 파일을 선택하거나 이미지 주소를 입력해 주세요."; return; }
+  for (const [label, value] of [["프렌즈카드 이미지", frontUrl], ["코디 이미지", backUrl]]) {
+    if (value) { try { const parsed = new URL(value); if (!["http:","https:"].includes(parsed.protocol)) throw new Error(); } catch { formMessage.textContent = `${label} 주소는 http:// 또는 https://로 시작하는 올바른 URL이어야 해요.`; return; } }
+  }
+  if (!currentEditId && !front?.size && !frontUrl) { formMessage.textContent = "프렌즈카드 이미지는 필수예요."; return; }
   if (!validateImage(front) || !validateImage(back)) { formMessage.textContent = "JPG, PNG, WEBP, GIF 이미지를 각각 5MB 이하로 선택해 주세요."; return; }
   if (!String(data.get("nameKo")||"").trim() && !String(data.get("nameJa")||"").trim()) { formMessage.textContent = "한국어 또는 일본어 코디 이름을 하나 이상 입력해 주세요."; return; }
   if (!tags.length) { formMessage.textContent = "태그를 하나 이상 선택해 주세요."; return; }
@@ -288,6 +351,8 @@ registerForm.addEventListener("submit", async e => {
   payload.append("character_owner", String(data.get("characterOwner")||"").trim());
   if (front?.size) payload.append("front", front);
   if (back?.size) payload.append("back", back);
+  if (frontUrl) payload.append("front_url", frontUrl);
+  if (backUrl) payload.append("back_url", backUrl);
   const submit = registerForm.querySelector('button[type="submit"]');
   submit.disabled = true;
   formMessage.textContent = currentEditId ? "프렌즈카드 수정 중…" : "이미지와 코디 정보를 저장 중…";
