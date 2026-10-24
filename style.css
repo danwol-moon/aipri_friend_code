@@ -5,3 +5,5 @@
 
 
 .owner-password-label{display:flex;flex-direction:column;gap:7px;margin-top:12px;font-size:12px;font-weight:700}.owner-password-label input{height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;color:var(--ink)}.owner-actions{display:flex;gap:10px;margin-top:12px}.danger-button{border:1px solid #efb4c7;background:#fff4f7;color:#b33b68;border-radius:13px;padding:12px 18px;font-weight:700}.danger-button:hover{background:#ffe8f0}
+
+.topbar-actions{display:flex;align-items:center;gap:10px}.secondary-button{border:1px solid #e7c5dc;border-radius:13px;padding:11px 15px;background:#fff;color:#a74d8d;font-weight:700}.secondary-button.active{background:#a74d8d;color:#fff}.admin-mode-note{font-size:12px;color:#a74d8d;margin:8px 0 0}@media(max-width:560px){.topbar-actions{gap:6px}.secondary-button{padding:10px;font-size:11px}.topbar-actions .primary{padding:10px;font-size:11px}}
