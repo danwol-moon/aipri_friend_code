@@ -300,8 +300,16 @@ function openEditForm(item, password, isAdmin = false) {
   registerForm.elements.xId.value = item.x_id || "";
   registerForm.elements.myCharacter.value = item.my_character || "";
   registerForm.elements.characterOwner.value = item.character_owner || "";
-  if (/^https?:\/\//i.test(String(item.front_image_path || ""))) registerForm.elements.frontUrl.value = item.front_image_path;
-  if (item.back_image_path && item.back_image_path !== item.front_image_path && /^https?:\/\//i.test(String(item.back_image_path))) registerForm.elements.backUrl.value = item.back_image_path;
+  // 수정 화면을 열면 기존 이미지도 미리보기로 표시합니다.
+  const frontPath = String(item.front_image_path || "");
+  const backPath = String(item.back_image_path || "");
+  if (/^https?:\/\//i.test(frontPath)) registerForm.elements.frontUrl.value = frontPath;
+  if (backPath && backPath !== frontPath && /^https?:\/\//i.test(backPath)) registerForm.elements.backUrl.value = backPath;
+  const frontBox = registerForm.elements.front.closest(".upload-box");
+  const backBox = registerForm.elements.back.closest(".upload-box");
+  if (frontPath) showImagePreview(frontBox, imageUrl(frontPath));
+  if (backPath && backPath !== frontPath) showImagePreview(backBox, imageUrl(backPath));
+  else if (frontPath) showImagePreview(backBox, imageUrl(frontPath));
   registerForm.elements.password.value = isAdmin ? "" : password;
   // 관리자 수정은 기존 등록 비밀번호가 필요 없으므로 브라우저의 required 검사를 해제합니다.
   registerForm.elements.password.required = !isAdmin;
