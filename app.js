@@ -308,8 +308,9 @@ function openEditForm(item, password, isAdmin = false) {
   const frontBox = registerForm.elements.front.closest(".upload-box");
   const backBox = registerForm.elements.back.closest(".upload-box");
   if (frontPath) showImagePreview(frontBox, imageUrl(frontPath));
+  // 코디 이미지가 별도로 저장된 경우에만 오른쪽 미리보기를 표시합니다.
+  // back_image_path가 프렌즈카드 이미지와 같으면 오른쪽은 비워 둡니다.
   if (backPath && backPath !== frontPath) showImagePreview(backBox, imageUrl(backPath));
-  else if (frontPath) showImagePreview(backBox, imageUrl(frontPath));
   registerForm.elements.password.value = isAdmin ? "" : password;
   // 관리자 수정은 기존 등록 비밀번호가 필요 없으므로 브라우저의 required 검사를 해제합니다.
   registerForm.elements.password.required = !isAdmin;
