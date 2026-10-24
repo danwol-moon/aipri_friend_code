@@ -355,5 +355,4 @@ adminForm.addEventListener("submit", async e => {
   button.textContent = "관리자 모드 켜짐 · 끄기";
   adminDialog.close();
   render();
-  window.alert("관리자 모드가 켜졌습니다. 이제 모든 카드의 수정·삭제가 가능합니다.");
 });
