@@ -1,3 +1,5 @@
+https://danwol-moon.github.io/aipri_friend_code/
+
 # 프렌즈 카드 모음
 
 여러 사용자가 프렌즈 카드를 등록하고 검색할 수 있는 프리티시리즈 유저가 만든 비공식 사이트입니다.
