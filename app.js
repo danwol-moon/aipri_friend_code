@@ -172,7 +172,10 @@ function resetImagePreviews() {
     preview.removeAttribute("src");
     delete preview.dataset.objectUrl;
     preview.hidden = true;
-    if (hint) hint.hidden = false;
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = input.name === "front" ? "이미지 파일 선택 (필수)" : "이미지 파일 선택 (선택 사항)";
+    }
     box.classList.remove("has-preview");
   });
 }
