@@ -37,3 +37,7 @@
 
 /* 상세 이미지의 투명 영역은 흰색 바탕 위에 표시 */
 .detail-images img{background:#fff}
+
+/* 상세 이미지의 투명 영역은 이미지 요소 자체가 아닌 각 이미지 칸의 흰색 바탕으로 비치게 함 */
+.detail-images{background:#fff}
+.detail-images img{background-color:#fff !important; mix-blend-mode:normal}
