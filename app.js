@@ -514,32 +514,75 @@ const languageCopy = {
   ko: {
     admin:"관리자 모드", register:"＋ 프카 이미지 등록", search:"코디 이름, 마이캐릭터명, X ID 검색",
     allTags:"모든 태그", newest:"최신 등록순", name:"이름순", gallery:"코디 둘러보기",
-    galleryHint:"등록된 코디를 눌러 상세 정보를 확인하세요.", empty:"아직 등록된 코디가 없어요.\n첫 번째 코디를 등록해 보세요!",
+    galleryHint:"등록된 이미지를 눌러 상세 정보를 확인해주세요", empty:"아직 등록된 코디가 없어요.\n첫 번째 코디를 등록해 보세요!",
     close:"닫기"
   },
   ja: {
     admin:"管理者モード", register:"＋ フレンズカード登録", search:"コーデ名・マイキャラクター名・X IDで検索",
     allTags:"すべてのタグ", newest:"新着順", name:"名前順", gallery:"コーデ一覧",
-    galleryHint:"カードを選択すると詳細を確認できます。", empty:"まだカードが登録されていません。\n最初のカードを登録しましょう！",
+    galleryHint:"登録された画像をクリックして詳細情報をご確認ください", empty:"まだカードが登録されていません。\n最初のカードを登録しましょう！",
     close:"閉じる"
   }
 };
 function applyLanguage(lang) {
   const t = languageCopy[lang] || languageCopy.ko;
   document.documentElement.lang = lang;
-  document.querySelector("#adminModeButton").textContent = t.admin;
+  document.querySelector("#adminModeButton").textContent = adminMode ? (lang === "ja" ? "管理者モード有効・解除" : "관리자 모드 켜짐 · 끄기") : t.admin;
+  document.querySelector("#brandName").childNodes[0].textContent = lang === "ja" ? "フレンドカードコレクション" : "프렌즈카드 컬렉션";
+  document.title = lang === "ja" ? "フレンドカードコレクション" : "프렌즈카드 컬렉션";
   document.querySelector("#openRegister").textContent = t.register;
   document.querySelector("#searchInput").placeholder = t.search;
   document.querySelector("#tagFilter option[value='']").textContent = t.allTags;
   document.querySelector("#sortFilter option[value='newest']").textContent = t.newest;
   document.querySelector("#sortFilter option[value='name']").textContent = t.name;
-  document.querySelector(".section-heading h2").childNodes[0].textContent = t.gallery + " ";
+  document.querySelector("#galleryHeading").textContent = t.gallery;
   document.querySelector(".section-heading > .muted").textContent = t.galleryHint;
   document.querySelector("#emptyState").innerHTML = t.empty.replace("\\n","<br>");
   document.querySelectorAll(".close").forEach(b => b.setAttribute("aria-label", t.close));
   document.querySelector("#adminDialog h2").textContent = t.admin;
   document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
-  document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンズカードを登録" : "프렌즈카드 등록하기";
+  document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
+  if (lang === "ja") {
+    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "ミルフィー", "グミ", "スペシャル"];
+    const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
+    [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagJa[tagKoValues.indexOf(opt.value)] || opt.value; });
+    [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
+      const input = label.querySelector("input");
+      const idx = tagKoValues.indexOf(input.value);
+      if (idx >= 0) label.lastChild.textContent = " " + tagJa[idx];
+    });
+    const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
+    strongs[0].childNodes[0].textContent = "フレンドカード画像 ";
+    strongs[0].querySelector(".required-mark").textContent = "(必須)";
+    strongs[1].textContent = "コーデ画像";
+    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "ファイルを選択するか画像URLを入力してください。";
+    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "任意 · ファイルまたは画像URL";
+    document.querySelector("#registerForm input[name='frontUrl']").placeholder = "画像URLを貼り付け";
+    document.querySelector("#registerForm input[name='frontUrl']").setAttribute("aria-label", "フレンドカード画像URL");
+    document.querySelector("#registerForm input[name='backUrl']").placeholder = "画像URLを貼り付け";
+    document.querySelector("#registerForm input[name='backUrl']").setAttribute("aria-label", "コーデ画像URL");
+    document.querySelector("#registerForm label:has(input[name='nameKo'])").childNodes[0].textContent = "コーデ名（韓国語）";
+    document.querySelector("#registerForm label:has(input[name='nameJa'])").childNodes[0].textContent = "コーデ名（日本語）";
+  } else {
+    const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
+    [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagKoValues[i - 1]; });
+    [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
+      const input = label.querySelector("input");
+      label.lastChild.textContent = " " + input.value;
+    });
+    const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
+    strongs[0].childNodes[0].textContent = "프렌즈카드 이미지 ";
+    strongs[0].querySelector(".required-mark").textContent = "(필수)";
+    strongs[1].textContent = "코디 이미지";
+    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "파일을 선택하거나 이미지 주소를 입력해 주세요.";
+    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "선택 사항 · 파일 또는 이미지 주소";
+    document.querySelector("#registerForm input[name='frontUrl']").placeholder = "또는 이미지 주소 URL 붙여넣기";
+    document.querySelector("#registerForm input[name='frontUrl']").setAttribute("aria-label", "프렌즈카드 이미지 주소");
+    document.querySelector("#registerForm input[name='backUrl']").placeholder = "또는 이미지 주소 URL 붙여넣기";
+    document.querySelector("#registerForm input[name='backUrl']").setAttribute("aria-label", "코디 이미지 주소");
+    document.querySelector("#registerForm label:has(input[name='nameKo'])").childNodes[0].textContent = "코디 이름 (한국어)";
+    document.querySelector("#registerForm label:has(input[name='nameJa'])").childNodes[0].textContent = "코디 이름 (일본어)";
+  }
 }
 languageSelect?.addEventListener("change", () => applyLanguage(languageSelect.value));
 applyLanguage(languageSelect?.value || "ko");
