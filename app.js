@@ -506,3 +506,52 @@ adminForm.addEventListener("submit", async e => {
   adminDialog.close();
   render();
 });
+
+
+// 언어 선택: 주요 내비게이션과 검색 UI를 한국어/일본어로 전환합니다.
+const languageSelect = document.querySelector("#languageSelect");
+const languageCopy = {
+  ko: {
+    admin:"관리자 모드", register:"＋ 프카 이미지 등록", search:"코디 이름, 마이캐릭터명, X ID 검색",
+    allTags:"모든 태그", newest:"최신 등록순", name:"이름순", gallery:"코디 둘러보기",
+    galleryHint:"등록된 코디를 눌러 상세 정보를 확인하세요.", empty:"아직 등록된 코디가 없어요.\n첫 번째 코디를 등록해 보세요!",
+    close:"닫기"
+  },
+  ja: {
+    admin:"管理者モード", register:"＋ フレンズカード登録", search:"コーデ名・マイキャラクター名・X IDで検索",
+    allTags:"すべてのタグ", newest:"新着順", name:"名前順", gallery:"コーデ一覧",
+    galleryHint:"カードを選択すると詳細を確認できます。", empty:"まだカードが登録されていません。\n最初のカードを登録しましょう！",
+    close:"閉じる"
+  }
+};
+function applyLanguage(lang) {
+  const t = languageCopy[lang] || languageCopy.ko;
+  document.documentElement.lang = lang;
+  document.querySelector("#adminModeButton").textContent = t.admin;
+  document.querySelector("#openRegister").textContent = t.register;
+  document.querySelector("#searchInput").placeholder = t.search;
+  document.querySelector("#tagFilter option[value='']").textContent = t.allTags;
+  document.querySelector("#sortFilter option[value='newest']").textContent = t.newest;
+  document.querySelector("#sortFilter option[value='name']").textContent = t.name;
+  document.querySelector(".section-heading h2").childNodes[0].textContent = t.gallery + " ";
+  document.querySelector(".section-heading > .muted").textContent = t.galleryHint;
+  document.querySelector("#emptyState").innerHTML = t.empty.replace("\\n","<br>");
+  document.querySelectorAll(".close").forEach(b => b.setAttribute("aria-label", t.close));
+  document.querySelector("#adminDialog h2").textContent = t.admin;
+  document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
+  document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンズカードを登録" : "프렌즈카드 등록하기";
+}
+languageSelect?.addEventListener("change", () => applyLanguage(languageSelect.value));
+applyLanguage(languageSelect?.value || "ko");
+
+// 관리자 버튼은 하단 비공식 안내문을 5回 클릭하면 표시합니다。
+// 비밀번호 인증은 기존대로 유지됩니다.
+const footerNotice = document.querySelector("footer span");
+let footerTapCount = 0;
+footerNotice?.addEventListener("click", () => {
+  footerTapCount += 1;
+  if (footerTapCount >= 5) {
+    document.body.classList.add("admin-entry-visible");
+    footerNotice.title = "관리자 메뉴가 표시되었습니다";
+  }
+});
