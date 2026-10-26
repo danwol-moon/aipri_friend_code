@@ -53,3 +53,21 @@
 .card-images img[alt="코디 이미지"] {
   background-color: #FFFFFF !important;
 }
+
+/* 모바일 상단 액션 버튼은 한 줄로 유지 */
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.topbar-actions button{white-space:nowrap;word-break:keep-all}
+.language-picker select{height:36px;max-width:none;padding:0 8px;border-radius:10px;font-size:12px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* 관리자 진입 버튼은 기본적으로 숨김. 하단 안내문을 5회 누르면 표시 */
+#adminModeButton{display:none}
+body.admin-entry-visible #adminModeButton{display:inline-flex}
+@media(max-width:560px){
+ .topbar{gap:8px;padding:0 10px}
+ .brand{gap:6px;font-size:11px;min-width:0}
+ .brand-logo{width:30px;height:30px;flex:0 0 30px}
+ .brand small{font-size:7px;letter-spacing:.08em}
+ .topbar-actions{gap:5px}
+ .topbar .primary{padding:8px 8px;font-size:10px;line-height:1.2}
+ .language-picker select{height:32px;font-size:10px;padding:0 4px}
+}
