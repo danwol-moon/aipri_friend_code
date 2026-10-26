@@ -543,7 +543,7 @@ function applyLanguage(lang) {
   document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
   document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
   if (lang === "ja") {
-    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "グミ", "ミルフィー", "スペシャル"];
+    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "ミルフィー", "グミ", "スペシャル"];
     const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
     [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagJa[tagKoValues.indexOf(opt.value)] || opt.value; });
     [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
@@ -551,6 +551,11 @@ function applyLanguage(lang) {
       const idx = tagKoValues.indexOf(input.value);
       if (idx >= 0) label.lastChild.textContent = " " + tagJa[idx];
     });
+    const jaOrder = ["프리마지", "히미프리", "오네프리", "구미", "밀피", "스페셜"];
+    const tagFilter = document.querySelector("#tagFilter");
+    jaOrder.forEach(value => { const option = [...tagFilter.options].find(o => o.value === value); if (option) tagFilter.appendChild(option); });
+    const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
+    jaOrder.forEach(value => { const label = [...tagFieldset.querySelectorAll("label")].find(l => l.querySelector("input").value === value); if (label) tagFieldset.appendChild(label); });
     const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
     strongs[0].childNodes[0].textContent = "フレンドカード画像 ";
     strongs[0].querySelector(".required-mark").textContent = "(必須)";
@@ -570,6 +575,11 @@ function applyLanguage(lang) {
       const input = label.querySelector("input");
       label.lastChild.textContent = " " + input.value;
     });
+    const koOrder = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
+    const tagFilter = document.querySelector("#tagFilter");
+    koOrder.forEach(value => { const option = [...tagFilter.options].find(o => o.value === value); if (option) tagFilter.appendChild(option); });
+    const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
+    koOrder.forEach(value => { const label = [...tagFieldset.querySelectorAll("label")].find(l => l.querySelector("input").value === value); if (label) tagFieldset.appendChild(label); });
     const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
     strongs[0].childNodes[0].textContent = "프렌즈카드 이미지 ";
     strongs[0].querySelector(".required-mark").textContent = "(필수)";
