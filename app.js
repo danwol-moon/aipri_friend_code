@@ -74,7 +74,7 @@ function render() {
     return;
   }
   gallery.innerHTML = list.map(item => `
-    <article class="coord-card" tabindex="0" role="button" data-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(bestName(item))} 상세 보기">
+    <article class="coord-card" tabindex="0" role="button" data-id="${escapeHtml(item.id)}" aria-label="${escapeHtml((languageSelect?.value === "ja" ? item.name_ja : item.name_ko) || bestName(item))} 상세 보기">
       <div class="card-images ${item.front_image_path === item.back_image_path ? "single" : ""}">
         <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지" loading="lazy">
         ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지" loading="lazy">`}
@@ -535,15 +535,19 @@ function applyLanguage(lang) {
   document.querySelector("#tagFilter option[value='']").textContent = t.allTags;
   document.querySelector("#sortFilter option[value='newest']").textContent = t.newest;
   document.querySelector("#sortFilter option[value='name']").textContent = t.name;
-  document.querySelector("#galleryHeading").textContent = t.gallery;
+  document.querySelector("#galleryHeading").textContent = "FRIENDS CARD LIST";
+  document.querySelector(".hero h1").innerHTML = lang === "ja" ? 'フレンドカードを<br><em>一度にまとめてみましょう！</em>' : '프렌즈 카드를<br><em>한 번에 모아봐요!</em>';
+  document.querySelector(".hero-copy > p:last-child").textContent = lang === "ja" ? "フレンドカードを登録すると、簡単に確認できます。" : "프카를 등록하고, 편하게 찾아볼 수 있어요.";
   document.querySelector(".section-heading > .muted").textContent = t.galleryHint;
   document.querySelector("#emptyState").innerHTML = t.empty.replace("\\n","<br>");
   document.querySelectorAll(".close").forEach(b => b.setAttribute("aria-label", t.close));
   document.querySelector("#adminDialog h2").textContent = t.admin;
   document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
   document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
+  document.querySelector("#registerForm button[type='submit']").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
+  document.querySelector("#registerForm .form-note").textContent = lang === "ja" ? "ファイルは5MB以下でアップロードしてください。" : "프렌즈카드 이미지는 필수예요. 파일을 올리거나 이미지 주소(URL)를 입력해 주세요. 코디 이미지는 선택 사항이며 파일은 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.";
   if (lang === "ja") {
-    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "ミルフィー", "グミ", "スペシャル"];
+    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "グミ", "ミルフィー", "スペシャル"];
     const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
     [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagJa[tagKoValues.indexOf(opt.value)] || opt.value; });
     [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
@@ -560,9 +564,17 @@ function applyLanguage(lang) {
     strongs[0].childNodes[0].textContent = "フレンドカード画像 ";
     strongs[0].querySelector(".required-mark").textContent = "(必須)";
     strongs[1].textContent = "コーデ画像";
-    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "ファイルを選択するか画像URLを入力してください。";
-    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "任意 · ファイルまたは画像URL";
+    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "ファイルを選択するか、画像のURLを入力してください。";
+    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "（オプション）ファイルを選択するか、画像のURLを入力してください。";
     document.querySelector("#registerForm input[name='frontUrl']").placeholder = "画像URLを貼り付け";
+    document.querySelector("#registerForm .tag-checkboxes legend").innerHTML = 'タグ <span class="muted">(複数選択可)</span>';
+    document.querySelector("#registerForm input[name='xId']").placeholder = "ニックネーム（ID）";
+    document.querySelector("#registerForm label:has(input[name='myCharacter'])").childNodes[0].textContent = "マイキャラクターの名前";
+    document.querySelector("#registerForm input[name='myCharacter']").placeholder = "";
+    document.querySelector("#registerForm label:has(input[name='characterOwner'])").childNodes[0].textContent = "その他事項";
+    document.querySelector("#registerForm input[name='characterOwner']").placeholder = "名前は公開不可、カスタムの有無など自由に記入してください";
+    document.querySelector("#registerForm label:has(input[name='password'])").childNodes[0].textContent = "登録パスワード";
+    document.querySelector("#registerForm input[name='password']").placeholder = "4文字以上・登録後にパスワードを入力すると内容の変更および削除が可能";
     document.querySelector("#registerForm input[name='frontUrl']").setAttribute("aria-label", "フレンドカード画像URL");
     document.querySelector("#registerForm input[name='backUrl']").placeholder = "画像URLを貼り付け";
     document.querySelector("#registerForm input[name='backUrl']").setAttribute("aria-label", "コーデ画像URL");
