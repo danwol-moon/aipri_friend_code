@@ -543,7 +543,7 @@ function applyLanguage(lang) {
   document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
   document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
   if (lang === "ja") {
-    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "ミルフィー", "グミ", "スペシャル"];
+    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "グミ", "ミルフィー", "スペシャル"];
     const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
     [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagJa[tagKoValues.indexOf(opt.value)] || opt.value; });
     [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
@@ -587,14 +587,13 @@ function applyLanguage(lang) {
 languageSelect?.addEventListener("change", () => applyLanguage(languageSelect.value));
 applyLanguage(languageSelect?.value || "ko");
 
-// 관리자 버튼은 하단 비공식 안내문을 5回 클릭하면 표시합니다。
-// 비밀번호 인증은 기존대로 유지됩니다.
-const footerNotice = document.querySelector("footer span");
-let footerTapCount = 0;
-footerNotice?.addEventListener("click", () => {
-  footerTapCount += 1;
-  if (footerTapCount >= 5) {
+// 관리자 버튼은 히어로 영역의 반짝이 아이콘을 5회 클릭하면 표시됩니다.
+const heroSparkle = document.querySelector(".hero-sparkle");
+let sparkleTapCount = 0;
+heroSparkle?.addEventListener("click", () => {
+  sparkleTapCount += 1;
+  if (sparkleTapCount >= 5) {
     document.body.classList.add("admin-entry-visible");
-    footerNotice.title = "관리자 메뉴가 표시되었습니다";
+    heroSparkle.title = languageSelect?.value === "ja" ? "管理者メニューを表示しました" : "관리자 메뉴가 표시되었습니다";
   }
 });
