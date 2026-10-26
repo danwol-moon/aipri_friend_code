@@ -107,7 +107,7 @@ function openDetail(id) {
   currentDetailId = id;
   const similar = findSimilar(item);
   document.querySelector("#detailContent").innerHTML = `
-    <p class="eyebrow">FRIENDS CARD DETAIL</p><h2>${escapeHtml(bestName(item))}</h2>
+    <p class="eyebrow">FRIENDS CARD DETAIL</p><h2>${escapeHtml((languageSelect?.value === "ja" ? item.name_ja : item.name_ko) || bestName(item))}</h2>
     <div class="detail-images ${item.front_image_path === item.back_image_path ? "single" : ""}">
       <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지">
       ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지">`}
