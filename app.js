@@ -106,23 +106,59 @@ function openDetail(id) {
   if (adminMode) { openEditForm(item, adminPassword, true); return; }
   currentDetailId = id;
   const similar = findSimilar(item);
+  const isJa = languageSelect?.value === "ja";
+  const detailText = isJa ? {
+    nameKo:"コーデ名（韓国語）", nameJa:"コーデ名（日本語）", tag:"タグ", xId:"X ID",
+    myCharacter:"マイキャラ", other:"その他", irochi:"✧ イロチ候補のおすすめ",
+    noSimilar:"比較できるコーデはまだありません。",
+    note:"名前の類似度に基づく候補であり、実際にイロチであることを保証するものではありません。",
+    adminTitle:"管理者編集", ownerTitle:"登録者管理",
+    adminDescription:"管理者モードが有効なため、このカードを編集できます。",
+    ownerDescription:"登録時に設定したパスワードを入力すると、このコーデを編集または削除できます。",
+    adminActive:"管理者モード有効", password:"登録パスワード",
+    adminPlaceholder:"管理者権限で処理します", passwordPlaceholder:"登録時に設定したパスワード",
+    edit:"編集する", delete:"削除する", passwordRequired:"登録パスワードを入力してください。",
+    deleteConfirm:"このフレンドカードを削除しますか？削除後は復元できません。",
+    deleting:"パスワードを確認して削除しています…",
+    frontAlt:"フレンドカード画像", backAlt:"コーデ画像"
+  } : {
+    nameKo:"코디 이름 (한국어)", nameJa:"코디 이름 (일본어)", tag:"태그", xId:"X ID",
+    myCharacter:"마이 캐릭터", other:"기타", irochi:"✧ 이로치 후보 추천",
+    noSimilar:"비교할 만한 코디가 아직 없어요.",
+    note:"이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.",
+    adminTitle:"관리자 편집", ownerTitle:"등록자 관리",
+    adminDescription:"관리자 모드가 켜져 있어 이 카드를 편집할 수 있어요.",
+    ownerDescription:"등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요.",
+    adminActive:"관리자 모드 활성화됨", password:"등록 비밀번호",
+    adminPlaceholder:"관리자 권한으로 처리됩니다", passwordPlaceholder:"등록할 때 설정한 비밀번호",
+    edit:"수정하기", delete:"삭제하기", passwordRequired:"등록 비밀번호를 입력해 주세요.",
+    deleteConfirm:"이 프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.",
+    deleting:"비밀번호 확인 및 삭제 중…",
+    frontAlt:"프렌즈카드 이미지", backAlt:"코디 이미지"
+  };
+  const displayName = isJa ? (item.name_ja || item.name_ko || "—") : (item.name_ko || item.name_ja || "—");
+  const secondaryName = isJa ? (item.name_ko || "—") : (item.name_ja || "—");
+  const visibleTags = String(item.tag || "").split(",").map(v => v.trim()).filter(Boolean)
+    .map(v => isJa ? (tagTranslations[v] || v) : v).join(" · ") || "—";
   document.querySelector("#detailContent").innerHTML = `
-    <p class="eyebrow">FRIENDS CARD DETAIL</p><h2>${escapeHtml((languageSelect?.value === "ja" ? item.name_ja : item.name_ko) || bestName(item))}</h2>
+    <p class="eyebrow">FRIENDS CARD DETAIL</p><h2>${escapeHtml(displayName)}</h2>
     <div class="detail-images ${item.front_image_path === item.back_image_path ? "single" : ""}">
-      <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지">
-      ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지">`}
+      <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="${detailText.frontAlt}">
+      ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="${detailText.backAlt}">`}
     </div>
     <div class="detail-info">
-      <p><strong>코디 이름 (일본어)</strong><br>${escapeHtml(item.name_ja || "—")}</p><p><strong>태그</strong><br>${escapeHtml(String(item.tag || "").split(",").join(" · ") || "—")}</p>
-      <p><strong>X ID</strong><br>${escapeHtml(item.x_id || "—")}</p><p><strong>마이캐릭터</strong><br>${escapeHtml(item.my_character || "—")}</p>
-      ${item.character_owner?'<p><strong>기타</strong><br>'+escapeHtml(item.character_owner)+'</p>':""}
+      <p><strong>${detailText.nameJa}</strong><br>${escapeHtml(secondaryName)}</p>
+      <p><strong>${detailText.tag}</strong><br>${escapeHtml(visibleTags)}</p>
+      <p><strong>${detailText.xId}</strong><br>${escapeHtml(item.x_id || "—")}</p>
+      <p><strong>${detailText.myCharacter}</strong><br>${escapeHtml(item.my_character || "—")}</p>
+      ${item.character_owner ? '<p><strong>' + detailText.other + '</strong><br>' + escapeHtml(item.character_owner) + '</p>' : ""}
     </div>
-    <div class="recommendations"><h3>✧ 이로치 후보 추천</h3>
-      ${similar.length ? `<div class="similar-card-grid">${similar.map(x => `<a class="similar-card" href="#gallery" data-similar-id="${escapeHtml(x.id)}" aria-label="${escapeHtml(bestName(x))} 상세 보기"><img src="${escapeHtml(imageUrl(x.front_image_path))}" alt="${escapeHtml(bestName(x))}" loading="lazy"><span class="similar-card-name">${escapeHtml(bestName(x))}</span><span class="similar-card-score">${Math.round(x.score*100)}% 유사</span></a>`).join("")}</div>` : `<p>비교할 만한 코디가 아직 없어요.</p>`} 
-      <p class="recommendation-note">이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.</p></div>
-    <div class="recommendations"><h3>${adminMode ? "관리자 편집" : "등록자 관리"}</h3><p>${adminMode ? "관리자 모드가 켜져 있어 이 카드를 편집할 수 있어요." : "등록 시 설정한 비밀번호를 입력하면 이 코디를 수정하거나 삭제할 수 있어요."}</p>
-      <label class="owner-password-label">${adminMode ? "관리자 모드 활성화됨" : "등록 비밀번호"}<input id="ownerPassword" type="password" autocomplete="current-password" placeholder="${adminMode ? "관리자 권한으로 처리됩니다" : "등록할 때 설정한 비밀번호"}" ${adminMode ? "disabled" : ""}></label>
-      <div class="owner-actions"><button class="primary" id="editCoordButton" type="button">수정하기</button><button class="danger-button" id="deleteCoordButton" type="button">삭제하기</button></div>
+    <div class="recommendations"><h3>${detailText.irochi}</h3>
+      ${similar.length ? `<div class="similar-card-grid">${similar.map(x => `<a class="similar-card" href="#gallery" data-similar-id="${escapeHtml(x.id)}" aria-label="${escapeHtml(isJa ? (x.name_ja || x.name_ko || bestName(x)) : bestName(x))} 詳細">` + `<img src="${escapeHtml(imageUrl(x.front_image_path))}" alt="${escapeHtml(isJa ? (x.name_ja || x.name_ko || bestName(x)) : bestName(x))}" loading="lazy"><span class="similar-card-name">${escapeHtml(isJa ? (x.name_ja || x.name_ko || bestName(x)) : bestName(x))}</span><span class="similar-card-score">${Math.round(x.score*100)}% ${isJa ? "類似" : "유사"}</span></a>`).join("")}</div>` : `<p>${detailText.noSimilar}</p>`}
+      <p class="recommendation-note">${detailText.note}</p></div>
+    <div class="recommendations"><h3>${adminMode ? detailText.adminTitle : detailText.ownerTitle}</h3><p>${adminMode ? detailText.adminDescription : detailText.ownerDescription}</p>
+      <label class="owner-password-label">${adminMode ? detailText.adminActive : detailText.password}<input id="ownerPassword" type="password" autocomplete="current-password" placeholder="${adminMode ? detailText.adminPlaceholder : detailText.passwordPlaceholder}" ${adminMode ? "disabled" : ""}></label>
+      <div class="owner-actions"><button class="primary" id="editCoordButton" type="button">${detailText.edit}</button><button class="danger-button" id="deleteCoordButton" type="button">${detailText.delete}</button></div>
       <p id="ownerMessage" class="form-message" role="status"></p>
     </div>`;
   detailDialog.showModal();
@@ -136,17 +172,17 @@ function openDetail(id) {
   });
   document.querySelector("#editCoordButton").addEventListener("click", () => {
     const password = adminMode ? adminPassword : document.querySelector("#ownerPassword").value;
-    if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
+    if (!password) { setOwnerMessage(languageSelect?.value === "ja" ? "登録パスワードを入力してください。" : "등록 비밀번호를 입력해 주세요."); return; }
     detailDialog.close();
     openEditForm(item, password, adminMode);
   });
   document.querySelector("#deleteCoordButton").addEventListener("click", async () => {
     const password = adminMode ? adminPassword : document.querySelector("#ownerPassword").value;
     if (!password) { setOwnerMessage("등록 비밀번호를 입력해 주세요."); return; }
-    if (!confirm("이 프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
+    if (!confirm(languageSelect?.value === "ja" ? "このフレンドカードを削除しますか？削除後は復元できません。" : "이 프렌즈카드를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
     const data = new FormData();
     data.append("action","delete"); data.append("id",item.id); if (adminMode) data.append("admin_password", password); else data.append("password", password);
-    setOwnerMessage("비밀번호 확인 및 삭제 중…");
+    setOwnerMessage(languageSelect?.value === "ja" ? "パスワードを確認して削除しています…" : "비밀번호 확인 및 삭제 중…");
     const result = await callFunction(data);
     if (result.ok) { detailDialog.close(); await loadCoords(); }
     else setOwnerMessage(result.error || "삭제하지 못했습니다.");
@@ -524,87 +560,120 @@ const languageCopy = {
     close:"閉じる"
   }
 };
+const tagTranslations = {
+  "프리마지": "プリマジ",
+  "히미프리": "ひみつのアイプリ",
+  "오네프리": "おねがい アイプリ",
+  "밀피": "ミルフィー",
+  "구미": "グミ",
+  "스페셜": "スペシャル"
+};
+const tagOrderKo = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
+const languageCopy = {
+  ko: {
+    admin:"관리자 모드", register:"＋ 프카 이미지 등록", search:"코디 이름, 마이캐릭터명, X ID 검색",
+    allTags:"모든 태그", newest:"최신 등록순", name:"이름순", gallery:"코디 둘러보기",
+    galleryHint:"등록된 이미지를 눌러 상세 정보를 확인해주세요", empty:"아직 등록된 코디가 없어요.\\n첫 번째 코디를 등록해 보세요!",
+    close:"닫기", brand:"프렌즈카드 컬렉션", hero:"프렌즈 카드를<br><em>한 번에 모아봐요!</em>",
+    heroDescription:"프카를 등록하고, 편하게 찾아볼 수 있어요.",
+    cardImage:"프렌즈카드 이미지", outfitImage:"코디 이미지", required:"(필수)",
+    frontHint:"파일을 선택하거나 이미지 주소를 입력해 주세요.", backHint:"선택 사항 · 파일 또는 이미지 주소",
+    urlPlaceholder:"또는 이미지 주소 URL 붙여넣기", frontUrlLabel:"프렌즈카드 이미지 주소", backUrlLabel:"코디 이미지 주소",
+    nameKo:"코디 이름 (한국어)", nameJa:"코디 이름 (일본어)", tag:"태그", multi:"(여러 개 선택 가능)",
+    xId:"X ID", myCharacter:"마이 캐릭터", myCharacterPlaceholder:"마이캐릭터 이름",
+    other:"기타", otherPlaceholder:"00대행 A캐릭터, 이름 공개 불가 등 자유롭게 작성",
+    password:"수정·삭제 비밀번호", passwordPlaceholder:"4자 이상 · 등록 후 비밀번호 입력 시 수정/삭제 가능",
+    formNote:"프렌즈카드 이미지는 필수예요. 파일을 올리거나 이미지 주소(URL)를 입력해 주세요. 코디 이미지는 선택 사항이며 파일은 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.",
+    registerTitle:"프렌즈카드 등록하기", registerSubmit:"프렌즈카드 등록하기"
+  },
+  ja: {
+    admin:"管理者モード", register:"＋ フレンドカード登録", search:"コーデ名・マイキャラ名・X IDで検索",
+    allTags:"すべてのタグ", newest:"新着順", name:"名前順", gallery:"コーデ一覧",
+    galleryHint:"登録された画像をクリックして詳細情報をご確認ください", empty:"まだカードが登録されていません。\\n最初のカードを登録しましょう！",
+    close:"閉じる", brand:"フレンドカードコレクション", hero:"フレンドカードを<br><em>まとめて集めましょう！</em>",
+    heroDescription:"フレンドカードを登録して、簡単に探せます。",
+    cardImage:"フレンドカード画像", outfitImage:"コーデ画像", required:"(必須)",
+    frontHint:"ファイルを選択するか、画像URLを入力してください。", backHint:"任意・ファイルまたは画像URL",
+    urlPlaceholder:"画像URLを貼り付け", frontUrlLabel:"フレンドカード画像URL", backUrlLabel:"コーデ画像URL",
+    nameKo:"コーデ名（韓国語）", nameJa:"コーデ名（日本語）", tag:"タグ", multi:"(複数選択可)",
+    xId:"X ID", myCharacter:"マイキャラ", myCharacterPlaceholder:"マイキャラ名",
+    other:"その他", otherPlaceholder:"名前を公開できない場合など、自由に記入してください",
+    password:"編集・削除用パスワード", passwordPlaceholder:"4文字以上・登録後に入力すると編集／削除できます",
+    formNote:"フレンドカード画像は必須です。ファイルをアップロードするか画像URLを入力してください。コーデ画像は任意です。ファイルは5MB以下、パスワードは4文字以上にしてください。",
+    registerTitle:"フレンドカードを登録する", registerSubmit:"フレンドカードを登録する"
+  }
+};
+function setLabelText(selector, text) {
+  const label = document.querySelector(selector);
+  if (label && label.firstChild) label.firstChild.textContent = text;
+}
 function applyLanguage(lang) {
-  const t = languageCopy[lang] || languageCopy.ko;
-  document.documentElement.lang = lang;
-  document.querySelector("#adminModeButton").textContent = adminMode ? (lang === "ja" ? "管理者モード有効・解除" : "관리자 모드 켜짐 · 끄기") : t.admin;
-  document.querySelector("#brandName").childNodes[0].textContent = lang === "ja" ? "フレンドカードコレクション" : "프렌즈카드 컬렉션";
-  document.title = lang === "ja" ? "フレンドカードコレクション" : "프렌즈카드 컬렉션";
+  const isJa = lang === "ja";
+  const t = languageCopy[isJa ? "ja" : "ko"];
+  document.documentElement.lang = isJa ? "ja" : "ko";
+  document.querySelector("#adminModeButton").textContent = adminMode ? (isJa ? "管理者モード有効・解除" : "관리자 모드 켜짐 · 끄기") : t.admin;
+  document.querySelector("#brandName").childNodes[0].textContent = t.brand;
+  document.title = t.brand;
   document.querySelector("#openRegister").textContent = t.register;
   document.querySelector("#searchInput").placeholder = t.search;
   document.querySelector("#tagFilter option[value='']").textContent = t.allTags;
   document.querySelector("#sortFilter option[value='newest']").textContent = t.newest;
   document.querySelector("#sortFilter option[value='name']").textContent = t.name;
   document.querySelector("#galleryHeading").textContent = "FRIENDS CARD LIST";
-  document.querySelector(".hero h1").innerHTML = lang === "ja" ? 'フレンドカードを<br><em>一度にまとめてみましょう！</em>' : '프렌즈 카드를<br><em>한 번에 모아봐요!</em>';
-  document.querySelector(".hero-copy > p:last-child").textContent = lang === "ja" ? "フレンドカードを登録すると、簡単に確認できます。" : "프카를 등록하고, 편하게 찾아볼 수 있어요.";
+  document.querySelector(".hero h1").innerHTML = t.hero;
+  document.querySelector(".hero-copy > p:last-child").textContent = t.heroDescription;
   document.querySelector(".section-heading > .muted").textContent = t.galleryHint;
   document.querySelector("#emptyState").innerHTML = t.empty.replace("\\n","<br>");
   document.querySelectorAll(".close").forEach(b => b.setAttribute("aria-label", t.close));
   document.querySelector("#adminDialog h2").textContent = t.admin;
-  document.querySelector("#adminForm button[type='submit']").textContent = lang === "ja" ? "管理者モードを有効にする" : "관리자 모드 켜기";
-  document.querySelector("#registerDialog h2").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
-  document.querySelector("#registerForm button[type='submit']").textContent = lang === "ja" ? "フレンドカードを登録する" : "프렌즈카드 등록하기";
-  document.querySelector("#registerForm .form-note").textContent = lang === "ja" ? "ファイルは5MB以下でアップロードしてください。" : "프렌즈카드 이미지는 필수예요. 파일을 올리거나 이미지 주소(URL)를 입력해 주세요. 코디 이미지는 선택 사항이며 파일은 5MB 이하로 선택해 주세요. 비밀번호는 4자 이상으로 설정해 주세요.";
-  if (lang === "ja") {
-    const tagJa = ["プリマジ", "ひみつのアイプリ", "おねがい アイプリ", "グミ", "ミルフィー", "スペシャル"];
-    const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
-    [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagJa[tagKoValues.indexOf(opt.value)] || opt.value; });
-    [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
-      const input = label.querySelector("input");
-      const idx = tagKoValues.indexOf(input.value);
-      if (idx >= 0) label.lastChild.textContent = " " + tagJa[idx];
-    });
-    const jaOrder = ["프리마지", "히미프리", "오네프리", "구미", "밀피", "스페셜"];
-    const tagFilter = document.querySelector("#tagFilter");
-    jaOrder.forEach(value => { const option = [...tagFilter.options].find(o => o.value === value); if (option) tagFilter.appendChild(option); });
-    const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
-    jaOrder.forEach(value => { const label = [...tagFieldset.querySelectorAll("label")].find(l => l.querySelector("input").value === value); if (label) tagFieldset.appendChild(label); });
-    const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
-    strongs[0].childNodes[0].textContent = "フレンドカード画像 ";
-    strongs[0].querySelector(".required-mark").textContent = "(必須)";
-    strongs[1].textContent = "コーデ画像";
-    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "ファイルを選択するか、画像のURLを入力してください。";
-    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "（オプション）ファイルを選択するか、画像のURLを入力してください。";
-    document.querySelector("#registerForm input[name='frontUrl']").placeholder = "画像URLを貼り付け";
-    document.querySelector("#registerForm .tag-checkboxes legend").innerHTML = 'タグ <span class="muted">(複数選択可)</span>';
-    document.querySelector("#registerForm input[name='xId']").placeholder = "ニックネーム（ID）";
-    document.querySelector("#registerForm label:has(input[name='myCharacter'])").childNodes[0].textContent = "マイキャラクターの名前";
-    document.querySelector("#registerForm input[name='myCharacter']").placeholder = "";
-    document.querySelector("#registerForm label:has(input[name='characterOwner'])").childNodes[0].textContent = "その他事項";
-    document.querySelector("#registerForm input[name='characterOwner']").placeholder = "名前は公開不可、カスタムの有無など自由に記入してください";
-    document.querySelector("#registerForm label:has(input[name='password'])").childNodes[0].textContent = "登録パスワード";
-    document.querySelector("#registerForm input[name='password']").placeholder = "4文字以上・登録後にパスワードを入力すると内容の変更および削除が可能";
-    document.querySelector("#registerForm input[name='frontUrl']").setAttribute("aria-label", "フレンドカード画像URL");
-    document.querySelector("#registerForm input[name='backUrl']").placeholder = "画像URLを貼り付け";
-    document.querySelector("#registerForm input[name='backUrl']").setAttribute("aria-label", "コーデ画像URL");
-    document.querySelector("#registerForm label:has(input[name='nameKo'])").childNodes[0].textContent = "コーデ名（韓国語）";
-    document.querySelector("#registerForm label:has(input[name='nameJa'])").childNodes[0].textContent = "コーデ名（日本語）";
-  } else {
-    const tagKoValues = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
-    [...document.querySelectorAll("#tagFilter option")].forEach((opt, i) => { if (i > 0) opt.textContent = tagKoValues[i - 1]; });
-    [...document.querySelectorAll("#registerForm .tag-checkboxes label")].forEach(label => {
-      const input = label.querySelector("input");
-      label.lastChild.textContent = " " + input.value;
-    });
-    const koOrder = ["프리마지", "히미프리", "오네프리", "밀피", "구미", "스페셜"];
-    const tagFilter = document.querySelector("#tagFilter");
-    koOrder.forEach(value => { const option = [...tagFilter.options].find(o => o.value === value); if (option) tagFilter.appendChild(option); });
-    const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
-    koOrder.forEach(value => { const label = [...tagFieldset.querySelectorAll("label")].find(l => l.querySelector("input").value === value); if (label) tagFieldset.appendChild(label); });
-    const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
-    strongs[0].childNodes[0].textContent = "프렌즈카드 이미지 ";
-    strongs[0].querySelector(".required-mark").textContent = "(필수)";
-    strongs[1].textContent = "코디 이미지";
-    document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = "파일을 선택하거나 이미지 주소를 입력해 주세요.";
-    document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = "선택 사항 · 파일 또는 이미지 주소";
-    document.querySelector("#registerForm input[name='frontUrl']").placeholder = "또는 이미지 주소 URL 붙여넣기";
-    document.querySelector("#registerForm input[name='frontUrl']").setAttribute("aria-label", "프렌즈카드 이미지 주소");
-    document.querySelector("#registerForm input[name='backUrl']").placeholder = "또는 이미지 주소 URL 붙여넣기";
-    document.querySelector("#registerForm input[name='backUrl']").setAttribute("aria-label", "코디 이미지 주소");
-    document.querySelector("#registerForm label:has(input[name='nameKo'])").childNodes[0].textContent = "코디 이름 (한국어)";
-    document.querySelector("#registerForm label:has(input[name='nameJa'])").childNodes[0].textContent = "코디 이름 (일본어)";
-  }
+  document.querySelector("#adminForm button[type='submit']").textContent = isJa ? "管理者モードを有効にする" : "관리자 모드 켜기";
+  document.querySelector("#registerDialog h2").textContent = t.registerTitle;
+  document.querySelector("#registerForm button[type='submit']").textContent = t.registerSubmit;
+  document.querySelector("#registerForm .form-note").textContent = t.formNote;
+
+  const tagFilterEl = document.querySelector("#tagFilter");
+  [...tagFilterEl.options].filter(opt => opt.value).forEach(opt => {
+    opt.textContent = isJa ? (tagTranslations[opt.value] || opt.value) : opt.value;
+  });
+  // Keep the original canonical Korean tag values; only change their visible text.
+  const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
+  tagFieldset.querySelectorAll("label").forEach(label => {
+    const input = label.querySelector("input");
+    const textNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = " " + (isJa ? (tagTranslations[input.value] || input.value) : input.value);
+  });
+  tagFieldset.querySelector("legend").innerHTML = t.tag + ' <span class="muted">' + t.multi + '</span>';
+
+  const strongs = document.querySelectorAll("#registerForm .image-fields .upload-box strong");
+  strongs[0].childNodes[0].textContent = t.cardImage + " ";
+  strongs[0].querySelector(".required-mark").textContent = t.required;
+  strongs[1].textContent = t.outfitImage;
+  document.querySelector("#registerForm .image-fields label:nth-child(1) .upload-hint").textContent = t.frontHint;
+  document.querySelector("#registerForm .image-fields label:nth-child(2) .upload-hint").textContent = t.backHint;
+  ["frontUrl","backUrl"].forEach(name => {
+    const input = document.querySelector('#registerForm input[name="' + name + '"]');
+    input.placeholder = t.urlPlaceholder;
+    input.setAttribute("aria-label", name === "frontUrl" ? t.frontUrlLabel : t.backUrlLabel);
+  });
+  setLabelText('#registerForm label:has(input[name="nameKo"])', t.nameKo);
+  setLabelText('#registerForm label:has(input[name="nameJa"])', t.nameJa);
+  setLabelText('#registerForm label:has(input[name="xId"])', t.xId);
+  setLabelText('#registerForm label:has(input[name="myCharacter"])', t.myCharacter);
+  document.querySelector('#registerForm input[name="myCharacter"]').placeholder = t.myCharacterPlaceholder;
+  setLabelText('#registerForm label:has(input[name="characterOwner"])', t.other);
+  document.querySelector('#registerForm input[name="characterOwner"]').placeholder = t.otherPlaceholder;
+  setLabelText('#registerForm label:has(input[name="password"])', t.password);
+  document.querySelector('#registerForm input[name="password"]').placeholder = t.passwordPlaceholder;
+
+  // Preserve tag order in both languages without moving elements on every switch.
+  const tagOrder = isJa ? ["프리마지","히미프리","오네프리","구미","밀피","스페셜"] : tagOrderKo;
+  tagOrder.forEach(value => {
+    const option = [...tagFilterEl.options].find(opt => opt.value === value);
+    if (option) tagFilterEl.appendChild(option);
+    const label = [...tagFieldset.querySelectorAll("label")].find(el => el.querySelector("input").value === value);
+    if (label) tagFieldset.appendChild(label);
+  });
+  render();
 }
 languageSelect?.addEventListener("change", () => applyLanguage(languageSelect.value));
 applyLanguage(languageSelect?.value || "ko");
