@@ -546,20 +546,6 @@ adminForm.addEventListener("submit", async e => {
 
 // 언어 선택: 주요 내비게이션과 검색 UI를 한국어/일본어로 전환합니다.
 const languageSelect = document.querySelector("#languageSelect");
-const languageCopy = {
-  ko: {
-    admin:"관리자 모드", register:"＋ 프카 이미지 등록", search:"코디 이름, 마이캐릭터명, X ID 검색",
-    allTags:"모든 태그", newest:"최신 등록순", name:"이름순", gallery:"코디 둘러보기",
-    galleryHint:"등록된 이미지를 눌러 상세 정보를 확인해주세요", empty:"아직 등록된 코디가 없어요.\n첫 번째 코디를 등록해 보세요!",
-    close:"닫기"
-  },
-  ja: {
-    admin:"管理者モード", register:"＋ フレンズカード登録", search:"コーデ名・マイキャラクター名・X IDで検索",
-    allTags:"すべてのタグ", newest:"新着順", name:"名前順", gallery:"コーデ一覧",
-    galleryHint:"登録された画像をクリックして詳細情報をご確認ください", empty:"まだカードが登録されていません。\n最初のカードを登録しましょう！",
-    close:"閉じる"
-  }
-};
 const tagTranslations = {
   "프리마지": "プリマジ",
   "히미프리": "ひみつのアイプリ",
