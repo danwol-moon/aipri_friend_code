@@ -147,7 +147,7 @@ function openDetail(id) {
       ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="${detailText.backAlt}">`}
     </div>
     <div class="detail-info">
-      <p><strong>${detailText.nameJa}</strong><br>${escapeHtml(secondaryName)}</p>
+      <p><strong>${isJa ? "コーデ名（韓国語）" : "코디 이름 (일본어)"}</strong><br>${escapeHtml(secondaryName)}</p>
       <p><strong>${detailText.tag}</strong><br>${escapeHtml(visibleTags)}</p>
       <p><strong>${detailText.xId}</strong><br>${escapeHtml(item.x_id || "—")}</p>
       <p><strong>${detailText.myCharacter}</strong><br>${escapeHtml(item.my_character || "—")}</p>
