@@ -675,7 +675,13 @@ function applyLanguage(lang) {
   });
   render();
 }
-languageSelect?.addEventListener("change", () => applyLanguage(languageSelect.value));
+languageSelect?.addEventListener("change", () => {
+  applyLanguage(languageSelect.value);
+  if (detailDialog.open && currentDetailId && !adminMode) {
+    detailDialog.close();
+    openDetail(currentDetailId);
+  }
+});
 applyLanguage(languageSelect?.value || "ko");
 
 // 관리자 버튼은 히어로 영역의 반짝이 아이콘을 5회 클릭하면 표시됩니다.
