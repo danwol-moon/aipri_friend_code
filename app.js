@@ -221,7 +221,7 @@ function resetImagePreviews() {
     preview.hidden = true;
     if (hint) {
       hint.hidden = false;
-      hint.textContent = input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+      hint.textContent = document.documentElement.lang === "ja" ? "ファイルを選択するか、画像のURLを入力してください。" : (input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소");
     }
     box.classList.remove("has-preview", "preview-error");
   });
@@ -267,7 +267,7 @@ function setupImagePreviews() {
       if (!file) {
         if (hint) {
           hint.hidden = false;
-          hint.textContent = input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+          hint.textContent = document.documentElement.lang === "ja" ? "ファイルを選択するか、画像のURLを入力してください。" : (input.name === "front" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소");
         }
         preview.removeAttribute("src");
         preview.hidden = true;
@@ -331,7 +331,7 @@ function openCreateForm() {
   resetFileRequirements(false);
   formMessage.textContent = "";
   registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR FRIEND CARD";
-  registerDialog.querySelector("h2").textContent = "프렌즈카드 등록하기";
+  registerDialog.querySelector("h2").textContent = languageSelect?.value === "ja" ? "フレンズカードを追加する" : "프렌즈카드 등록하기";
   registerForm.querySelector('button[type="submit"]').textContent = "프렌즈카드 등록하기";
   registerDialog.showModal();
 }
@@ -579,7 +579,7 @@ const languageCopy = {
     close:"閉じる", brand:"フレンドカードコレクション", hero:"フレンドカードを<br><em>まとめて集めましょう！</em>",
     heroDescription:"フレンドカードを登録して、簡単に探せます。",
     cardImage:"フレンドカード画像", outfitImage:"コーデ画像", required:"(必須)",
-    frontHint:"ファイルを選択するか、画像URLを入力してください。", backHint:"任意・ファイルまたは画像URL",
+    frontHint:"ファイルを選択するか、画像のURLを入力してください。", backHint:"ファイルを選択するか、画像のURLを入力してください。",
     urlPlaceholder:"画像URLを貼り付け", frontUrlLabel:"フレンドカード画像URL", backUrlLabel:"コーデ画像URL",
     nameKo:"コーデ名（韓国語）", nameJa:"コーデ名（日本語）", tag:"タグ", multi:"(複数選択可)",
     xId:"X ID", myCharacter:"マイキャラ", myCharacterPlaceholder:"マイキャラ名",
