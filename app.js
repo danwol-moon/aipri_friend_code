@@ -586,7 +586,7 @@ const languageCopy = {
     other:"その他", otherPlaceholder:"名前を公開できない場合など、自由に記入してください",
     password:"編集・削除用パスワード", passwordPlaceholder:"4文字以上・登録後に入力すると編集／削除できます",
     formNote:"フレンドカード画像は必須です。ファイルをアップロードするか画像URLを入力してください。コーデ画像は任意です。ファイルは5MB以下、パスワードは4文字以上にしてください。",
-    registerTitle:"フレンドカードを登録する", registerSubmit:"フレンドカードを登録する"
+    registerTitle:"フレンズカードを追加する", registerSubmit:"フレンドカードを登録する"
   }
 };
 function setLabelText(selector, text) {
@@ -618,8 +618,14 @@ function applyLanguage(lang) {
   document.querySelector("#registerForm .form-note").textContent = t.formNote;
 
   const tagFilterEl = document.querySelector("#tagFilter");
-  [...tagFilterEl.options].filter(opt => opt.value).forEach(opt => {
-    opt.textContent = isJa ? (tagTranslations[opt.value] || opt.value) : opt.value;
+  [...tagFilterEl.options].filter(opt => opt !== tagFilterEl.options[0]).forEach(opt => {
+    // The visible option text changes by language, but the value must remain the Korean DB tag.
+    // Recover the canonical value even if a previous language switch changed the implicit option value.
+    const canonicalTag = tagTranslations[opt.value]
+      ? opt.value
+      : (Object.keys(tagTranslations).find(key => tagTranslations[key] === opt.value) || opt.value);
+    opt.value = canonicalTag;
+    opt.textContent = isJa ? (tagTranslations[canonicalTag] || canonicalTag) : canonicalTag;
   });
   // Keep the original canonical Korean tag values; only change their visible text.
   const tagFieldset = document.querySelector("#registerForm .tag-checkboxes");
