@@ -305,7 +305,7 @@ function setupImagePreviews() {
         const hint = box.querySelector(".upload-hint");
         if (hint) {
           hint.hidden = false;
-          hint.textContent = input.name === "frontUrl" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소";
+          hint.textContent = document.documentElement.lang === "ja" ? "ファイルを選択するか、画像のURLを入力してください。" : (input.name === "frontUrl" ? "파일을 선택하거나 이미지 주소를 입력해 주세요." : "선택 사항 · 파일 또는 이미지 주소");
         }
         box.classList.remove("has-preview", "preview-error");
         return;
