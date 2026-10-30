@@ -650,6 +650,7 @@ function applyLanguage(lang) {
   setLabelText('#registerForm label:has(input[name="nameKo"])', t.nameKo);
   setLabelText('#registerForm label:has(input[name="nameJa"])', t.nameJa);
   setLabelText('#registerForm label:has(input[name="xId"])', t.xId);
+  document.querySelector('#registerForm input[name="xId"]').placeholder = isJa ? "ニックネーム(@ID)" : "닉네임 (@아이디)";
   setLabelText('#registerForm label:has(input[name="myCharacter"])', t.myCharacter);
   document.querySelector('#registerForm input[name="myCharacter"]').placeholder = t.myCharacterPlaceholder;
   setLabelText('#registerForm label:has(input[name="characterOwner"])', t.other);
