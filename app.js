@@ -332,7 +332,7 @@ function openCreateForm() {
   formMessage.textContent = "";
   registerDialog.querySelector(".eyebrow").textContent = "ADD YOUR FRIEND CARD";
   registerDialog.querySelector("h2").textContent = languageSelect?.value === "ja" ? "フレンズカードを追加する" : "프렌즈카드 등록하기";
-  registerForm.querySelector('button[type="submit"]').textContent = "프렌즈카드 등록하기";
+  registerForm.querySelector('button[type="submit"]').textContent = languageSelect?.value === "ja" ? "フレンズカードを登録する" : "프렌즈카드 등록하기";
   registerDialog.showModal();
 }
 function openEditForm(item, password, isAdmin = false) {
@@ -586,7 +586,7 @@ const languageCopy = {
     other:"その他", otherPlaceholder:"名前を公開できない場合など、自由に記入してください",
     password:"編集・削除用パスワード", passwordPlaceholder:"4文字以上・登録後に入力すると編集／削除できます",
     formNote:"フレンドカード画像は必須です。ファイルをアップロードするか画像URLを入力してください。コーデ画像は任意です。ファイルは5MB以下、パスワードは4文字以上にしてください。",
-    registerTitle:"フレンズカードを追加する", registerSubmit:"フレンドカードを登録する"
+    registerTitle:"フレンズカードを追加する", registerSubmit:"フレンズカードを登録する"
   }
 };
 function setLabelText(selector, text) {
