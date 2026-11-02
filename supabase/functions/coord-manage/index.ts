@@ -57,20 +57,42 @@ function extensionFor(file: File): string | null {
   const map: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
   return map[file.type] ?? null;
 }
-async function uploadImage(supabase: ReturnType<typeof createClient>, coordId: string, role: "front" | "back", file: File) {
+function b2Config() {
+  const workerUrl = (Deno.env.get("B2_WORKER_URL") ?? "").replace(/\/$/, "");
+  const uploadSecret = Deno.env.get("UPLOAD_SECRET") ?? "";
+  if (!workerUrl.startsWith("https://") || !uploadSecret) {
+    throw new Error("Backblaze Worker 설정이 필요합니다. B2_WORKER_URL과 UPLOAD_SECRET을 확인해 주세요.");
+  }
+  return { workerUrl, uploadSecret };
+}
+async function uploadToBackblaze(coordId: string, role: "front" | "back", bytes: Uint8Array, contentType: string) {
+  const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+  const ext = extByType[contentType];
+  if (!ext || !ALLOWED_TYPES.has(contentType)) throw new Error("이미지는 JPG, PNG, WEBP, GIF 형식만 가능합니다.");
+  if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new Error("이미지는 각각 5MB 이하로 선택해 주세요.");
+  const { workerUrl, uploadSecret } = b2Config();
+  const key = `${coordId}/${role}-${crypto.randomUUID()}.${ext}`;
+  let result: Response;
+  try {
+    result = await fetch(`${workerUrl}/upload/${key}`, {
+      method: "PUT",
+      headers: { "X-Upload-Secret": uploadSecret, "Content-Type": contentType },
+      body: bytes,
+    });
+  } catch {
+    throw new Error("Backblaze 이미지 서버에 연결하지 못했습니다.");
+  }
+  const payload = await result.json().catch(() => ({}));
+  if (!result.ok || !payload.url) throw new Error("Backblaze 이미지 업로드에 실패했습니다.");
+  return String(payload.url);
+}
+async function uploadImage(_supabase: ReturnType<typeof createClient>, coordId: string, role: "front" | "back", file: File) {
   const ext = extensionFor(file);
   if (!ext || !ALLOWED_TYPES.has(file.type)) throw new Error("이미지는 JPG, PNG, WEBP, GIF 형식만 가능합니다.");
   if (file.size <= 0 || file.size > MAX_IMAGE_BYTES) throw new Error("이미지는 각각 5MB 이하로 선택해 주세요.");
-  const path = `${coordId}/${role}-${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (error) throw new Error("이미지 업로드에 실패했습니다: " + error.message);
-  return path;
+  return uploadToBackblaze(coordId, role, new Uint8Array(await file.arrayBuffer()), file.type);
 }
-async function uploadRemoteImage(supabase: ReturnType<typeof createClient>, coordId: string, role: "front" | "back", url: string) {
+async function uploadRemoteImage(_supabase: ReturnType<typeof createClient>, coordId: string, role: "front" | "back", url: string) {
   let remote: Response;
   try {
     remote = await fetch(url, { headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,image/gif,*/*;q=0.8" } });
@@ -79,27 +101,38 @@ async function uploadRemoteImage(supabase: ReturnType<typeof createClient>, coor
   }
   if (!remote.ok) throw new Error(`이미지 주소에서 파일을 가져오지 못했습니다 (HTTP ${remote.status}). 파일을 직접 업로드해 주세요.`);
   const contentType = (remote.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-  const extByType: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
-  const ext = extByType[contentType];
-  if (!ext || !ALLOWED_TYPES.has(contentType)) throw new Error("주소가 이미지 파일을 반환하지 않습니다. JPG, PNG, WEBP, GIF 이미지의 직접 주소를 사용해 주세요.");
+  if (!ALLOWED_TYPES.has(contentType)) throw new Error("주소가 이미지 파일을 반환하지 않습니다. JPG, PNG, WEBP, GIF 이미지의 직접 주소를 사용해 주세요.");
   const declaredSize = Number(remote.headers.get("content-length") ?? "0");
   if (declaredSize > MAX_IMAGE_BYTES) throw new Error("URL 이미지도 5MB 이하만 등록할 수 있습니다.");
   const bytes = new Uint8Array(await remote.arrayBuffer());
   if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new Error("URL 이미지도 5MB 이하만 등록할 수 있습니다.");
-  const path = `${coordId}/${role}-${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
-    contentType,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (error) throw new Error("URL 이미지 저장에 실패했습니다: " + error.message);
-  return path;
+  return uploadToBackblaze(coordId, role, bytes, contentType);
 }
 async function removeImages(supabase: ReturnType<typeof createClient>, paths: string[]) {
-  const valid = [...new Set(paths.filter((path) => Boolean(path) && !/^https?:\/\//i.test(path)))];
-  if (!valid.length) return;
-  const { error } = await supabase.storage.from(BUCKET).remove(valid);
-  if (error) console.error("Storage cleanup failed", error.message);
+  const unique = [...new Set(paths.filter(Boolean))];
+  const { workerUrl, uploadSecret } = b2Config();
+  const legacyPaths: string[] = [];
+  for (const path of unique) {
+    if (/^https?:\/\//i.test(path)) {
+      if (path.startsWith(workerUrl + "/images/")) {
+        const key = path.slice((workerUrl + "/images/").length);
+        try {
+          const deleted = await fetch(`${workerUrl}/delete/${key}`, {
+            method: "DELETE", headers: { "X-Upload-Secret": uploadSecret },
+          });
+          if (!deleted.ok) console.error("Backblaze cleanup failed", deleted.status);
+        } catch (error) {
+          console.error("Backblaze cleanup failed", error);
+        }
+      }
+    } else {
+      legacyPaths.push(path);
+    }
+  }
+  if (legacyPaths.length) {
+    const { error } = await supabase.storage.from(BUCKET).remove(legacyPaths);
+    if (error) console.error("Legacy Supabase Storage cleanup failed", error.message);
+  }
 }
 
 Deno.serve(async (req) => {
