@@ -110,11 +110,12 @@ async function uploadRemoteImage(_supabase: ReturnType<typeof createClient>, coo
 }
 async function removeImages(supabase: ReturnType<typeof createClient>, paths: string[]) {
   const unique = [...new Set(paths.filter(Boolean))];
-  const { workerUrl, uploadSecret } = b2Config();
+  const workerUrl = (Deno.env.get("B2_WORKER_URL") ?? "").replace(/\/$/, "");
+  const uploadSecret = Deno.env.get("UPLOAD_SECRET") ?? "";
   const legacyPaths: string[] = [];
   for (const path of unique) {
     if (/^https?:\/\//i.test(path)) {
-      if (path.startsWith(workerUrl + "/images/")) {
+      if (workerUrl && uploadSecret && path.startsWith(workerUrl + "/images/")) {
         const key = path.slice((workerUrl + "/images/").length);
         try {
           const deleted = await fetch(`${workerUrl}/delete/${key}`, {
