@@ -137,7 +137,7 @@ export default {
       let key;
       try { key = safeKey(url.pathname.slice("/images/".length)); }
       catch { return json(400, { error: "Invalid image key." }); }
-      const publicUrl = "https://" + env.B2_ENDPOINT.replace(/^https?:\\/\\//, "").replace(/\\/$/, "") + "/" + encodeURIComponent(env.B2_BUCKET_NAME) + "/" + encodePath(key);
+      const publicUrl = "https://" + env.B2_ENDPOINT.replace(/^https?:\/\//, "").replace(/\/$/, "") + "/" + encodeURIComponent(env.B2_BUCKET_NAME) + "/" + encodePath(key);
       const cached = await caches.default.match(request);
       if (cached) return cached;
       const upstream = await fetch(publicUrl, { cf: { cacheEverything: true, cacheTtl: 31536000 } });
