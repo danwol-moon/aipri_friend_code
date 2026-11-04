@@ -125,6 +125,14 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+    if (url.pathname === "/health" && request.method === "GET") {
+      return json(200, {
+        ok: true,
+        service: "aipri-friend-image-worker",
+        configured: Boolean(env.B2_KEY_ID && env.B2_APPLICATION_KEY && env.B2_BUCKET_NAME &&
+          env.B2_ENDPOINT && env.B2_REGION && env.UPLOAD_SECRET),
+      });
+    }
     if (url.pathname.startsWith("/images/") && request.method === "GET") {
       let key;
       try { key = safeKey(url.pathname.slice("/images/".length)); }
