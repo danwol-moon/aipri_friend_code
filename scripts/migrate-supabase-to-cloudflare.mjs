@@ -51,6 +51,7 @@ function storagePath(value) {
   if (raw.includes(marker)) raw = raw.slice(raw.indexOf(marker) + marker.length);
   else if (raw.includes(authMarker)) raw = raw.slice(raw.indexOf(authMarker) + authMarker.length);
   else if (/^https?:\/\//i.test(raw)) return "";
+  raw = raw.split("?")[0].split("#")[0];
   return raw.split("/").map(part => decodeURIComponent(part)).join("/");
 }
 async function supabaseJson(url, options = {}) {
@@ -102,7 +103,14 @@ async function uploadObject(objectPath) {
   return { url: `${workerUrl}/images/${key}`, bytes: bytes.length };
 }
 async function getRows(table) {
-  return supabaseJson(`${supabaseUrl}/rest/v1/${table}?select=*&limit=10000`);
+  const all = [];
+  for (let offset = 0; ; offset += 1000) {
+    const url = `${supabaseUrl}/rest/v1/${table}?select=*&limit=1000&offset=${offset}`;
+    const rows = await supabaseJson(url);
+    all.push(...rows);
+    if (rows.length < 1000) break;
+  }
+  return all;
 }
 function imageDestination(oldValue, map) {
   if (!oldValue) return "";
