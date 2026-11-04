@@ -96,7 +96,7 @@ async function signAndDelete(env, key) {
   const canonicalHeaders =
     "host:" + host + "\n" +
     "x-amz-content-sha256:" + payloadHash + "\n" +
-    "x-amz-date:" + amzDate;
+    "x-amz-date:" + amzDate + "\n";
   const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
   const canonicalRequest = ["DELETE", canonicalUri, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
   const scope = dateStamp + "/" + region + "/s3/aws4_request";
