@@ -22,9 +22,7 @@ let adminMode = false;
 let adminPassword = "";
 
 function isConfigured() {
-  return SUPABASE_URL.startsWith("https://") &&
-    !SUPABASE_URL.includes("YOUR_PROJECT_REF") &&
-    SUPABASE_ANON_KEY !== "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+  return API_BASE.startsWith("https://") && CARDS_API.startsWith(API_BASE + "/");
 }
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -32,7 +30,7 @@ function escapeHtml(value = "") {
 function bestName(item) { return item.name_ko || item.name_ja || "이름 없는 프렌즈카드"; }
 function imageUrl(path) {
   if (/^https?:\/\//i.test(String(path || ""))) return String(path);
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${String(path).split("/").map(encodeURIComponent).join("/")}`;
+  return `${LEGACY_IMAGE_BASE}/${String(path || "").split("/").map(encodeURIComponent).join("/")}`;
 }
 async function loadCoords() {
   if (!isConfigured()) {
@@ -191,15 +189,11 @@ function setOwnerMessage(message) {
 }
 async function callFunction(formData) {
   try {
-    const response = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-      body: formData
-    });
+    const response = await fetch(CARDS_API, { method: "POST", body: formData });
     const result = await response.json().catch(() => ({}));
     return response.ok ? {ok:true,...result} : {ok:false,error:result.error || "요청에 실패했습니다."};
   } catch {
-    return {ok:false,error:"서버에 연결하지 못했습니다. 인터넷과 Supabase 설정을 확인해 주세요."};
+    return {ok:false,error:"Cloudflare 서버에 연결하지 못했습니다. 인터넷과 Worker 설정을 확인해 주세요."};
   }
 }
 function resetFileRequirements(isEdit) {
