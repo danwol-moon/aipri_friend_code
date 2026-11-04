@@ -51,7 +51,7 @@ async function signAndUpload(request, env, key) {
     "content-type:" + contentType + "\n" +
     "host:" + host + "\n" +
     "x-amz-content-sha256:" + payloadHash + "\n" +
-    "x-amz-date:" + amzDate;
+    "x-amz-date:" + amzDate + "\n";
   const signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date";
   const canonicalRequest = ["PUT", canonicalUri, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
   const scope = dateStamp + "/" + region + "/s3/aws4_request";
