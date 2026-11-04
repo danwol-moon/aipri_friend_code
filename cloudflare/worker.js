@@ -81,7 +81,7 @@ async function signAndUpload(request, env, key) {
     console.error("B2 upload failed", upstream.status, detail.slice(0, 500));
     return json(502, { error: "Backblaze upload failed.", status: upstream.status });
   }
-  const publicUrl = "https://f005.backblazeb2.com/file/" + encodeURIComponent(bucket) + "/" + encodePath(key);
+  const publicUrl = "https://" + host + "/" + encodeURIComponent(bucket) + "/" + encodePath(key);
   return json(201, { ok: true, key, url: new URL("/images/" + encodePath(key), request.url).toString(), publicUrl });
 }
 async function signAndDelete(env, key) {
@@ -137,7 +137,7 @@ export default {
       let key;
       try { key = safeKey(url.pathname.slice("/images/".length)); }
       catch { return json(400, { error: "Invalid image key." }); }
-      const publicUrl = "https://f005.backblazeb2.com/file/" + encodeURIComponent(env.B2_BUCKET_NAME) + "/" + encodePath(key);
+      const publicUrl = "https://" + env.B2_ENDPOINT.replace(/^https?:\\/\\//, "").replace(/\\/$/, "") + "/" + encodeURIComponent(env.B2_BUCKET_NAME) + "/" + encodePath(key);
       const cached = await caches.default.match(request);
       if (cached) return cached;
       const upstream = await fetch(publicUrl, { cf: { cacheEverything: true, cacheTtl: 31536000 } });
@@ -166,6 +166,8 @@ export default {
       return signAndUpload(request, env, key);
     }
     const ok = await signAndDelete(env, key);
-    return ok ? json(200, { ok: true }) : json(502, { error: "Backblaze delete failed." });
+    if (!ok) return json(502, { error: "Backblaze delete failed." });
+    await caches.default.delete(new Request(new URL("/images/" + encodePath(key), url.origin)));
+    return json(200, { ok: true });
   },
 };
