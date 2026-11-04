@@ -1,10 +1,9 @@
-// 프렌즈카드 모음 — Supabase 연결 설정
-// Project URL + publishable/anon key만 입력하세요.
-// secret/service_role 키는 절대 이 파일에 넣지 마세요.
-const SUPABASE_URL = "https://zlaiquivnuluglchqlbr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_JMTnzgv6xVYkeTIExhNl2Q_QaIVgAYC";
-const BUCKET = "coord-images";
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/coord-manage`;
+// 프렌즈카드 콜렉션 — Cloudflare Worker API
+// 공개 Worker 주소만 사용합니다. 관리자 비밀번호와 B2 키는 여기에 넣지 마세요.
+const API_BASE = "https://aipri-friend-image-worker.ghlwls0222.workers.dev";
+const CARDS_API = `${API_BASE}/api/cards`;
+// 기존 이미지 이전 검증이 끝날 때까지만 사용하는 레거시 이미지 주소입니다.
+const LEGACY_IMAGE_BASE = "https://zlaiquivnuluglchqlbr.supabase.co/storage/v1/object/public/coord-images";
 
 const gallery = document.querySelector("#gallery");
 const searchInput = document.querySelector("#searchInput");
@@ -37,17 +36,15 @@ function imageUrl(path) {
 }
 async function loadCoords() {
   if (!isConfigured()) {
-    gallery.innerHTML = '<div class="empty-state">Supabase 연결 설정이 필요해요.<br><strong>app.js</strong> 맨 위에 프로젝트 URL과 공개용 키를 입력해 주세요.</div>';
+    gallery.innerHTML = '<div class="empty-state">Cloudflare Worker 연결 주소를 확인해 주세요.</div>';
     resultCount.textContent = "—";
     emptyState.hidden = true;
     return;
   }
   gallery.innerHTML = '<p class="muted">프렌즈카드를 불러오는 중…</p>';
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/friends_card?select=*&order=created_at.desc`, {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    if (!response.ok) throw new Error("프렌즈카드 목록을 불러오지 못했습니다. Supabase URL/키와 RLS 정책을 확인해 주세요.");
+    const response = await fetch(CARDS_API, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("프렌즈카드 목록을 불러오지 못했습니다. Cloudflare Worker와 D1 설정을 확인해 주세요.");
     coords = await response.json();
     render();
   } catch (error) {
