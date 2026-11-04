@@ -195,7 +195,7 @@ async function fetchRemoteImage(value) {
     throw error;
   } finally { clearTimeout(timer); }
 }
-async function storeImage(env, id, role, file, remoteUrl) {
+async function storeImage(env, requestUrl, id, role, file, remoteUrl) {
   let bytes, type;
   if (file instanceof File && file.size) {
     bytes = new Uint8Array(await file.arrayBuffer());
@@ -214,7 +214,7 @@ async function storeImage(env, id, role, file, remoteUrl) {
   const uploaded = await signAndUpload(uploadRequest, env, key);
   const result = await uploaded.json();
   if (!uploaded.ok || !result.url) throw new Error("Backblaze 이미지 업로드에 실패했습니다.");
-  return result.url;
+  return new URL("/images/" + encodePath(key), requestUrl).toString();
 }
 function b2KeyFromUrl(value, requestUrl) {
   try {
@@ -259,9 +259,9 @@ async function cardsApi(request, env) {
     const newId = crypto.randomUUID();
     const uploaded = [];
     try {
-      let front = await storeImage(env, newId, "front", frontFile, frontUrl);
+      let front = await storeImage(env, request.url, newId, "front", frontFile, frontUrl);
       if (front) uploaded.push(front);
-      let back = await storeImage(env, newId, "back", backFile, backUrl);
+      let back = await storeImage(env, request.url, newId, "back", backFile, backUrl);
       if (back) uploaded.push(back);
       if (!front) front = back;
       if (!back) back = front;
@@ -302,8 +302,8 @@ async function cardsApi(request, env) {
   let front=current.front_image_path, back=current.back_image_path;
   const uploaded=[];
   try {
-    const frontNew=await storeImage(env,id,"front",form.get("front"),field(form,"front_url",2000));
-    const backNew=await storeImage(env,id,"back",form.get("back"),field(form,"back_url",2000));
+    const frontNew=await storeImage(env,request.url,id,"front",form.get("front"),field(form,"front_url",2000));
+    const backNew=await storeImage(env,request.url,id,"back",form.get("back"),field(form,"back_url",2000));
     if (frontNew) { front=frontNew; uploaded.push(frontNew); }
     if (backNew) { back=backNew; uploaded.push(backNew); }
     await env.DB.prepare("UPDATE friends_card SET name_ko=?,name_ja=?,tag=?,front_image_path=?,back_image_path=?,x_id=?,display_name=?,my_character=?,character_owner=?,updated_at=? WHERE id=?")
