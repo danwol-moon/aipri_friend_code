@@ -120,6 +120,7 @@ console.log("1/4 Supabase 카드 및 비밀번호 데이터를 읽습니다.");
 const [cards, credentials] = await Promise.all([getRows("friends_card"), getRows("coord_credentials")]);
 console.log(`카드 ${cards.length}개, 비밀번호 레코드 ${credentials.length}개 확인`);
 
+await writeFile(path.join(outputDir, "source-backup.json"), JSON.stringify({ cards, credentials }, null, 2));
 console.log("2/4 Storage 전체 객체를 조사하고 B2로 복사합니다.");
 const objects = await listAllObjects("");
 const imageMap = new Map();
