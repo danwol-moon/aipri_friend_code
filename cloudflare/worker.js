@@ -306,6 +306,7 @@ async function cardsApi(request, env) {
     const backNew=await storeImage(env,request.url,id,"back",form.get("back"),field(form,"back_url",2000));
     if (frontNew) { front=frontNew; uploaded.push(frontNew); }
     if (backNew) { back=backNew; uploaded.push(backNew); }
+    else if (frontNew && current.back_image_path === current.front_image_path) back = frontNew;
     await env.DB.prepare("UPDATE friends_card SET name_ko=?,name_ja=?,tag=?,front_image_path=?,back_image_path=?,x_id=?,display_name=?,my_character=?,character_owner=?,updated_at=? WHERE id=?")
       .bind(name_ko,name_ja,tags.join(","),front,back,field(form,"x_id",80),field(form,"display_name",80),field(form,"my_character",80),field(form,"character_owner",100),new Date().toISOString(),id).run();
   } catch(error) {
