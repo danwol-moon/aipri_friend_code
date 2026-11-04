@@ -33,3 +33,10 @@ CREATE TABLE IF NOT EXISTS coord_credentials (
   password_hash TEXT NOT NULL,
   FOREIGN KEY (coord_id) REFERENCES friends_card(id) ON DELETE CASCADE
 );
+
+-- General public site settings (never store secrets or passwords here).
+CREATE TABLE IF NOT EXISTS app_settings (
+  setting_key TEXT PRIMARY KEY NOT NULL,
+  setting_value TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
