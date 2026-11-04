@@ -117,10 +117,13 @@ function imageDestination(oldValue, map) {
   if (/^https?:\/\//i.test(String(oldValue))) {
     if (String(oldValue).startsWith(workerUrl + "/images/")) return oldValue;
     const p = storagePath(oldValue);
-    return p && map.has(p) ? map.get(p).url : oldValue;
+    if (!p) return oldValue; // external, non-Supabase URL
+    if (!map.has(p)) throw new Error(`카드가 참조하는 Storage 파일을 찾을 수 없습니다: ${p}`);
+    return map.get(p).url;
   }
   const p = storagePath(oldValue);
-  return p && map.has(p) ? map.get(p).url : oldValue;
+  if (!map.has(p)) throw new Error(`카드가 참조하는 Storage 파일을 찾을 수 없습니다: ${p}`);
+  return map.get(p).url;
 }
 
 await mkdir(outputDir, { recursive: true });
