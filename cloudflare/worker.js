@@ -333,8 +333,10 @@ export default {
       return json(200, {
         ok: true,
         service: "aipri-friend-image-worker",
-        configured: Boolean(env.B2_KEY_ID && env.B2_APPLICATION_KEY && env.B2_BUCKET_NAME &&
+        b2Configured: Boolean(env.B2_KEY_ID && env.B2_APPLICATION_KEY && env.B2_BUCKET_NAME &&
           env.B2_ENDPOINT && env.B2_REGION && env.UPLOAD_SECRET),
+        d1Bound: Boolean(env.DB),
+        adminConfigured: Boolean(env.FRIENDS_CARD_ADMIN_PASSWORD && env.FRIENDS_CARD_ADMIN_PASSWORD.length >= 8),
       });
     }
     if (url.pathname.startsWith("/images/") && request.method === "GET") {
