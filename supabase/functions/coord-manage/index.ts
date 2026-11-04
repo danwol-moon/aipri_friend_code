@@ -259,13 +259,15 @@ Deno.serve(async (req) => {
           frontPath = await uploadImage(supabase, id, "front", front);
           uploaded.push(frontPath);
         } else if (frontUrl) {
-          frontPath = frontUrl;
+          frontPath = await uploadRemoteImage(supabase, id, "front", frontUrl);
+          uploaded.push(frontPath);
         }
         if (back instanceof File && back.size > 0) {
           backPath = await uploadImage(supabase, id, "back", back);
           uploaded.push(backPath);
         } else if (backUrl) {
-          backPath = backUrl;
+          backPath = await uploadRemoteImage(supabase, id, "back", backUrl);
+          uploaded.push(backPath);
         }
         const { error: updateError } = await supabase.from("friends_card").update({
           name_ko: nameKo, name_ja: nameJa, tag,
