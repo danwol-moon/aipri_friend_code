@@ -365,7 +365,7 @@ function validateImage(file) {
 }
 registerForm.addEventListener("submit", async e => {
   e.preventDefault();
-  if (!isConfigured()) { formMessage.textContent = "먼저 app.js에 Supabase URL과 공개용 키를 입력해 주세요."; return; }
+  if (!isConfigured()) { formMessage.textContent = "Cloudflare Worker 연결 주소를 확인해 주세요."; return; }
   const data = new FormData(registerForm);
   const front = data.get("front"), back = data.get("back");
   const frontUrl = String(data.get("frontUrl") || "").trim();
