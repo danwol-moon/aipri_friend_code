@@ -112,17 +112,24 @@ async function getRows(table) {
   }
   return all;
 }
-function imageDestination(oldValue, map) {
+const missingImageReferences = [];
+function imageDestination(oldValue, map, cardId, imageType) {
   if (!oldValue) return "";
   if (/^https?:\/\//i.test(String(oldValue))) {
     if (String(oldValue).startsWith(workerUrl + "/images/")) return oldValue;
     const p = storagePath(oldValue);
     if (!p) return oldValue; // external, non-Supabase URL
-    if (!map.has(p)) throw new Error(`카드가 참조하는 Storage 파일을 찾을 수 없습니다: ${p}`);
+    if (!map.has(p)) {
+      missingImageReferences.push({ cardId, imageType, path: p });
+      return "";
+    }
     return map.get(p).url;
   }
   const p = storagePath(oldValue);
-  if (!map.has(p)) throw new Error(`카드가 참조하는 Storage 파일을 찾을 수 없습니다: ${p}`);
+  if (!map.has(p)) {
+    missingImageReferences.push({ cardId, imageType, path: p });
+    return "";
+  }
   return map.get(p).url;
 }
 
@@ -151,8 +158,8 @@ await writeFile(path.join(outputDir, "migration-failures.json"), JSON.stringify(
 
 console.log("3/4 D1 입력 SQL을 생성합니다.");
 const cardRows = cards.map(row => {
-  const front = imageDestination(row.front_image_path, imageMap);
-  const back = imageDestination(row.back_image_path, imageMap);
+  const front = imageDestination(row.front_image_path, imageMap, row.id, "front");
+  const back = imageDestination(row.back_image_path, imageMap, row.id, "back");
   return `INSERT INTO friends_card (id,name_ko,name_ja,tag,front_image_path,back_image_path,x_id,display_name,my_character,character_owner,created_at,updated_at) VALUES (${[
     row.id,row.name_ko || "",row.name_ja || "",row.tag || "",front,back,row.x_id || "",row.display_name || "",
     row.my_character || "",row.character_owner || "",row.created_at || new Date().toISOString(),row.updated_at || null
@@ -166,9 +173,11 @@ for (let i = 0; i < statements.length; i += 40) {
   const file = path.join(outputDir, `d1-batch-${String(Math.floor(i / 40) + 1).padStart(4,"0")}.sql`);
   await writeFile(file, "PRAGMA foreign_keys=ON;\n" + statements.slice(i, i + 40).join("\n") + "\n");
 }
+await writeFile(path.join(outputDir, "missing-image-references.json"), JSON.stringify(missingImageReferences, null, 2));
 await writeFile(path.join(outputDir, "source-counts.json"), JSON.stringify({
   cards: cards.length, credentials: credentials.length, storageObjects: objects.length,
-  copiedImages: imageMap.size, failedImages: failures.length
+  copiedImages: imageMap.size, failedImages: failures.length,
+  missingImageReferences: missingImageReferences.length
 }, null, 2));
 
 if (failures.length) {
