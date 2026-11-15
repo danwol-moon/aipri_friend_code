@@ -188,9 +188,9 @@ function validRemoteImageUrl(value) {
   try {
     const u = new URL(value);
     if (!["https:", "http:"].includes(u.protocol) || !u.hostname || u.username || u.password) return false;
-    const host = u.hostname.toLowerCase().replace(/^\\[|\\]$/g, "");
+    const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     // URL normalizes unusual IPv4 forms; reject all IP literals and local-only hostnames.
-    if (/^(?:\\d{1,3}\\.){3}\\d{1,3}$/.test(host) || host.includes(":") ||
+    if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) || host.includes(":") ||
         host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") ||
         host.endsWith(".internal") || host.endsWith(".test") || host.endsWith(".invalid") ||
         host === "metadata.google.internal") return false;
