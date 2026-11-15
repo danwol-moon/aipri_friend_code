@@ -176,11 +176,12 @@ function validRemoteImageUrl(value) {
   try {
     const u = new URL(value);
     if (!["https:", "http:"].includes(u.protocol) || !u.hostname || u.username || u.password) return false;
-    const host = u.hostname.toLowerCase();
-    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") ||
-        host === "0.0.0.0" || host === "::1" || /^127\./.test(host) ||
-        /^10\./.test(host) || /^192\.168\./.test(host) ||
-        /^169\.254\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) return false;
+    const host = u.hostname.toLowerCase().replace(/^\\[|\\]$/g, "");
+    // URL normalizes unusual IPv4 forms; reject all IP literals and local-only hostnames.
+    if (/^(?:\\d{1,3}\\.){3}\\d{1,3}$/.test(host) || host.includes(":") ||
+        host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") ||
+        host.endsWith(".internal") || host.endsWith(".test") || host.endsWith(".invalid") ||
+        host === "metadata.google.internal") return false;
     return true;
   } catch { return false; }
 }
