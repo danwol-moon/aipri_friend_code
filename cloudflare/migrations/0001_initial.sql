@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS friends_card (
   display_name TEXT NOT NULL DEFAULT '',
   my_character TEXT NOT NULL DEFAULT '',
   character_owner TEXT NOT NULL DEFAULT '',
+  other_info TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at TEXT
 );
