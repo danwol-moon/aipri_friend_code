@@ -160,10 +160,10 @@ console.log("3/4 D1 입력 SQL을 생성합니다.");
 const cardRows = cards.map(row => {
   const front = imageDestination(row.front_image_path, imageMap, row.id, "front");
   const back = imageDestination(row.back_image_path, imageMap, row.id, "back");
-  return `INSERT INTO friends_card (id,name_ko,name_ja,tag,front_image_path,back_image_path,x_id,display_name,my_character,character_owner,created_at,updated_at) VALUES (${[
+  return `INSERT INTO friends_card (id,name_ko,name_ja,tag,front_image_path,back_image_path,x_id,display_name,my_character,character_owner,other_info,created_at,updated_at) VALUES (${[
     row.id,row.name_ko || "",row.name_ja || "",row.tag || "",front,back,row.x_id || "",row.display_name || "",
-    row.my_character || "",row.character_owner || "",row.created_at || new Date().toISOString(),row.updated_at || null
-  ].map(sql).join(",")}) ON CONFLICT(id) DO UPDATE SET name_ko=excluded.name_ko,name_ja=excluded.name_ja,tag=excluded.tag,front_image_path=excluded.front_image_path,back_image_path=excluded.back_image_path,x_id=excluded.x_id,display_name=excluded.display_name,my_character=excluded.my_character,character_owner=excluded.character_owner,created_at=excluded.created_at,updated_at=excluded.updated_at;`;
+    row.my_character || "",row.character_owner || "",row.other_info || "",row.created_at || new Date().toISOString(),row.updated_at || null
+  ].map(sql).join(",")}) ON CONFLICT(id) DO UPDATE SET name_ko=excluded.name_ko,name_ja=excluded.name_ja,tag=excluded.tag,front_image_path=excluded.front_image_path,back_image_path=excluded.back_image_path,x_id=excluded.x_id,display_name=excluded.display_name,my_character=excluded.my_character,character_owner=excluded.character_owner,other_info=excluded.other_info,created_at=excluded.created_at,updated_at=excluded.updated_at;`;
 });
 const credentialRows = credentials.map(row =>
   `INSERT INTO coord_credentials (coord_id,password_salt,password_hash) VALUES (${[row.coord_id,row.password_salt,row.password_hash].map(sql).join(",")}) ON CONFLICT(coord_id) DO UPDATE SET password_salt=excluded.password_salt,password_hash=excluded.password_hash;`
