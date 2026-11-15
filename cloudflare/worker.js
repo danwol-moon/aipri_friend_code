@@ -167,6 +167,18 @@ async function checkAdminRateLimit(env, request) {
     .bind(key, String(count + 1)).run();
   return { allowed: true, key };
 }
+async function checkCreateRateLimit(env, request) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const key = "create_attempts:" + await sha256(new TextEncoder().encode(ip));
+  const now = Date.now();
+  const row = await env.DB.prepare("SELECT setting_value, updated_at FROM app_settings WHERE setting_key=?").bind(key).first();
+  const last = row?.updated_at ? Date.parse(row.updated_at) : 0;
+  const count = last && now - last < 60 * 60 * 1000 ? Number(row.setting_value || 0) : 0;
+  if (count >= 12) return false;
+  await env.DB.prepare("INSERT INTO app_settings (setting_key,setting_value,updated_at) VALUES (?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=excluded.updated_at")
+    .bind(key, String(count + 1)).run();
+  return true;
+}
 function adminAllowed(env, form) {
   const configured = env.FRIENDS_CARD_ADMIN_PASSWORD || "";
   const supplied = String(form.get("admin_password") || "");
@@ -265,6 +277,7 @@ async function cardsApi(request, env) {
     return json(200, { ok: true });
   }
   if (action === "create") {
+    if (!(await checkCreateRateLimit(env, request))) return json(429, { error: "등록 요청이 너무 많습니다. 1시간 후 다시 시도해 주세요." });
     const name_ko = field(form, "name_ko", 100), name_ja = field(form, "name_ja", 100);
     const tags = field(form, "tag", 200).split(",").map(v => v.trim()).filter(Boolean);
     if (!name_ko && !name_ja) return json(400, { error: "한국어 또는 일본어 코디 이름을 입력해 주세요." });
