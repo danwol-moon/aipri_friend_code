@@ -1,10 +1,9 @@
-// 프렌즈카드 모음 — Supabase 연결 설정
-// Project URL + publishable/anon key만 입력하세요.
-// secret/service_role 키는 절대 이 파일에 넣지 마세요.
-const SUPABASE_URL = "https://zlaiquivnuluglchqlbr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_JMTnzgv6xVYkeTIExhNl2Q_QaIVgAYC";
-const BUCKET = "coord-images";
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/coord-manage`;
+// 프렌즈카드 콜렉션 — Cloudflare Worker API
+// 공개 Worker 주소만 사용합니다. 관리자 비밀번호와 B2 키는 여기에 넣지 마세요.
+const API_BASE = "https://aipri-friend-image-worker.ghlwls0222.workers.dev";
+const CARDS_API = `${API_BASE}/api/cards`;
+// 기존 이미지 이전 검증이 끝날 때까지만 사용하는 레거시 이미지 주소입니다.
+const LEGACY_IMAGE_BASE = "https://zlaiquivnuluglchqlbr.supabase.co/storage/v1/object/public/coord-images";
 
 const gallery = document.querySelector("#gallery");
 const searchInput = document.querySelector("#searchInput");
@@ -23,9 +22,7 @@ let adminMode = false;
 let adminPassword = "";
 
 function isConfigured() {
-  return SUPABASE_URL.startsWith("https://") &&
-    !SUPABASE_URL.includes("YOUR_PROJECT_REF") &&
-    SUPABASE_ANON_KEY !== "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+  return API_BASE.startsWith("https://") && CARDS_API.startsWith(API_BASE + "/");
 }
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -33,21 +30,19 @@ function escapeHtml(value = "") {
 function bestName(item) { return item.name_ko || item.name_ja || "이름 없는 프렌즈카드"; }
 function imageUrl(path) {
   if (/^https?:\/\//i.test(String(path || ""))) return String(path);
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${String(path).split("/").map(encodeURIComponent).join("/")}`;
+  return `${LEGACY_IMAGE_BASE}/${String(path || "").split("/").map(encodeURIComponent).join("/")}`;
 }
 async function loadCoords() {
   if (!isConfigured()) {
-    gallery.innerHTML = '<div class="empty-state">Supabase 연결 설정이 필요해요.<br><strong>app.js</strong> 맨 위에 프로젝트 URL과 공개용 키를 입력해 주세요.</div>';
+    gallery.innerHTML = '<div class="empty-state">Cloudflare Worker 연결 주소를 확인해 주세요.</div>';
     resultCount.textContent = "—";
     emptyState.hidden = true;
     return;
   }
   gallery.innerHTML = '<p class="muted">프렌즈카드를 불러오는 중…</p>';
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/friends_card?select=*&order=created_at.desc`, {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-    });
-    if (!response.ok) throw new Error("프렌즈카드 목록을 불러오지 못했습니다. Supabase URL/키와 RLS 정책을 확인해 주세요.");
+    const response = await fetch(CARDS_API, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("프렌즈카드 목록을 불러오지 못했습니다. Cloudflare Worker와 D1 설정을 확인해 주세요.");
     coords = await response.json();
     render();
   } catch (error) {
@@ -57,7 +52,7 @@ async function loadCoords() {
 function filteredCoords() {
   const q = searchInput.value.trim().toLocaleLowerCase();
   let list = coords.filter(item => {
-    const haystack = [item.name_ko,item.name_ja,item.x_id,item.my_character,item.character_owner,item.tag].join(" ").toLocaleLowerCase();
+    const haystack = [item.name_ko,item.name_ja,item.display_name,item.x_id,item.my_character,item.character_owner,item.tag].join(" ").toLocaleLowerCase();
     const tags = String(item.tag || "").split(",").filter(Boolean);
     return (!q || haystack.includes(q)) && (!tagFilter.value || tags.includes(tagFilter.value));
   });
@@ -79,7 +74,7 @@ function render() {
         <img src="${escapeHtml(imageUrl(item.front_image_path))}" alt="프렌즈카드 이미지" loading="lazy">
         ${item.front_image_path === item.back_image_path ? "" : `<img src="${escapeHtml(imageUrl(item.back_image_path))}" alt="코디 이미지" loading="lazy">`}
       </div>
-      <div class="card-body"><span class="tag">${escapeHtml((languageSelect?.value === "ja" ? String(item.tag || "").split(",").map(v => ({ "프리마지":"プリマジ","히미프리":"ひみつのアイプリ","오네프리":"おねがい アイプリ","구미":"グミ","밀피":"ミルフィー","스페셜":"スペシャル" }[v.trim()] || v.trim())).join(" · ") : String(item.tag || "").split(",").join(" · ")))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml(item.x_id || "X ID 미입력")}</div>${item.character_owner?`<p class="card-extra"><strong>기타</strong><br>${escapeHtml(item.character_owner)}</p>`:""}${adminMode?`<div class="admin-card-actions"><button type="button" data-admin-edit="${escapeHtml(item.id)}">수정</button><button type="button" class="danger-button" data-admin-delete="${escapeHtml(item.id)}">삭제</button></div>`:""}</div>
+      <div class="card-body"><span class="tag">${escapeHtml((languageSelect?.value === "ja" ? String(item.tag || "").split(",").map(v => ({ "프리마지":"プリマジ","히미프리":"ひみつのアイプリ","오네프리":"おねがい アイプリ","구미":"グミ","밀피":"ミルフィー","스페셜":"スペシャル" }[v.trim()] || v.trim())).join(" · ") : String(item.tag || "").split(",").join(" · ")))}</span><p class="card-title">${escapeHtml(bestName(item))}</p><p class="card-subtitle">${escapeHtml(item.my_character || "마이캐릭터 미입력")}</p><div class="card-meta">${escapeHtml([item.display_name, item.x_id].filter(Boolean).join(" · ") || "등록자 정보 미입력")}</div>${item.character_owner?`<p class="card-extra"><strong>기타</strong><br>${escapeHtml(item.character_owner)}</p>`:""}${adminMode?`<div class="admin-card-actions"><button type="button" data-admin-edit="${escapeHtml(item.id)}">수정</button><button type="button" class="danger-button" data-admin-delete="${escapeHtml(item.id)}">삭제</button></div>`:""}</div>
     </article>`).join("");
 }
 function similarity(a,b) {
@@ -108,7 +103,7 @@ function openDetail(id) {
   const similar = findSimilar(item);
   const isJa = languageSelect?.value === "ja";
   const detailText = isJa ? {
-    nameKo:"コーデ名（韓国語）", nameJa:"コーデ名（日本語）", tag:"タグ", xId:"X ID",
+    nameKo:"コーデ名（韓国語）", nameJa:"コーデ名（日本語）", tag:"タグ", registrant:"登録者名", xId:"X ID",
     myCharacter:"マイキャラ", other:"その他", irochi:"✧ イロチ候補のおすすめ",
     noSimilar:"比較できるコーデはまだありません。",
     note:"名前の類似度に基づく候補であり、実際にイロチであることを保証するものではありません。",
@@ -122,7 +117,7 @@ function openDetail(id) {
     deleting:"パスワードを確認して削除しています…",
     frontAlt:"フレンドカード画像", backAlt:"コーデ画像"
   } : {
-    nameKo:"코디 이름 (한국어)", nameJa:"코디 이름 (일본어)", tag:"태그", xId:"X ID",
+    nameKo:"코디 이름 (한국어)", nameJa:"코디 이름 (일본어)", tag:"태그", registrant:"등록자 이름", xId:"X ID",
     myCharacter:"마이 캐릭터", other:"기타", irochi:"✧ 이로치 후보 추천",
     noSimilar:"비교할 만한 코디가 아직 없어요.",
     note:"이름 유사도 기반 후보이며 실제 이로치 여부를 확정하지 않습니다.",
@@ -149,6 +144,7 @@ function openDetail(id) {
     <div class="detail-info">
       <p><strong>${isJa ? "コーデ名（韓国語）" : "코디 이름 (일본어)"}</strong><br>${escapeHtml(secondaryName)}</p>
       <p><strong>${detailText.tag}</strong><br>${escapeHtml(visibleTags)}</p>
+      <p><strong>${detailText.registrant}</strong><br>${escapeHtml(item.display_name || "—")}</p>
       <p><strong>${detailText.xId}</strong><br>${escapeHtml(item.x_id || "—")}</p>
       <p><strong>${detailText.myCharacter}</strong><br>${escapeHtml(item.my_character || "—")}</p>
       ${item.character_owner ? '<p><strong>' + detailText.other + '</strong><br>' + escapeHtml(item.character_owner) + '</p>' : ""}
@@ -194,15 +190,11 @@ function setOwnerMessage(message) {
 }
 async function callFunction(formData) {
   try {
-    const response = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-      body: formData
-    });
+    const response = await fetch(CARDS_API, { method: "POST", body: formData });
     const result = await response.json().catch(() => ({}));
     return response.ok ? {ok:true,...result} : {ok:false,error:result.error || "요청에 실패했습니다."};
   } catch {
-    return {ok:false,error:"서버에 연결하지 못했습니다. 인터넷과 Supabase 설정을 확인해 주세요."};
+    return {ok:false,error:"Cloudflare 서버에 연결하지 못했습니다. 인터넷과 Worker 설정을 확인해 주세요."};
   }
 }
 function resetFileRequirements(isEdit) {
@@ -344,6 +336,7 @@ function openEditForm(item, password, isAdmin = false) {
   const selectedTags = String(item.tag || "").split(",").filter(Boolean);
   registerForm.querySelectorAll('input[name="tag"]').forEach(input => { input.checked = selectedTags.includes(input.value); });
   registerForm.elements.xId.value = item.x_id || "";
+  registerForm.elements.displayName.value = item.display_name || "";
   registerForm.elements.myCharacter.value = item.my_character || "";
   registerForm.elements.characterOwner.value = item.character_owner || "";
   // 수정 화면을 열면 기존 이미지도 미리보기로 표시합니다.
@@ -374,7 +367,7 @@ function validateImage(file) {
 }
 registerForm.addEventListener("submit", async e => {
   e.preventDefault();
-  if (!isConfigured()) { formMessage.textContent = "먼저 app.js에 Supabase URL과 공개용 키를 입력해 주세요."; return; }
+  if (!isConfigured()) { formMessage.textContent = "Cloudflare Worker 연결 주소를 확인해 주세요."; return; }
   const data = new FormData(registerForm);
   const front = data.get("front"), back = data.get("back");
   const frontUrl = String(data.get("frontUrl") || "").trim();
@@ -392,6 +385,7 @@ registerForm.addEventListener("submit", async e => {
   if (!String(data.get("nameKo") || "").trim()) missingFields.push("코디 이름 (한국어)");
   if (!String(data.get("nameJa") || "").trim()) missingFields.push("코디 이름 (일본어)");
   if (!String(data.get("xId") || "").trim()) missingFields.push("X ID");
+  if (!String(data.get("displayName") || "").trim()) missingFields.push("등록자 이름");
   if (!String(data.get("myCharacter") || "").trim()) missingFields.push("마이캐릭터명");
   if (missingFields.length) {
     const message = "빈칸이 존재합니다. 이대로 등록하겠습니까?\n\n비어 있는 항목: " + missingFields.join(", ");
@@ -406,6 +400,7 @@ registerForm.addEventListener("submit", async e => {
   payload.append("name_ja", String(data.get("nameJa")||"").trim());
   payload.append("tag", tags.join(","));
   payload.append("x_id", String(data.get("xId")||"").trim());
+  payload.append("display_name", String(data.get("displayName")||"").trim());
   payload.append("my_character", String(data.get("myCharacter")||"").trim());
   payload.append("character_owner", String(data.get("characterOwner")||"").trim());
   if (front?.size) payload.append("front", front);
