@@ -155,6 +155,18 @@ async function checkCardPassword(env, id, password) {
   const candidate = await passwordHash(password, row.password_salt);
   return constantTimeEqual(candidate.hash, row.password_hash);
 }
+async function checkAdminRateLimit(env, request) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const key = "admin_attempts:" + await sha256(new TextEncoder().encode(ip));
+  const now = Date.now();
+  const row = await env.DB.prepare("SELECT setting_value, updated_at FROM app_settings WHERE setting_key=?").bind(key).first();
+  const last = row?.updated_at ? Date.parse(row.updated_at) : 0;
+  const count = last && now - last < 15 * 60 * 1000 ? Number(row.setting_value || 0) : 0;
+  if (count >= 5) return { allowed: false, key };
+  await env.DB.prepare("INSERT INTO app_settings (setting_key,setting_value,updated_at) VALUES (?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=excluded.updated_at")
+    .bind(key, String(count + 1)).run();
+  return { allowed: true, key };
+}
 function adminAllowed(env, form) {
   const configured = env.FRIENDS_CARD_ADMIN_PASSWORD || "";
   const supplied = String(form.get("admin_password") || "");
@@ -245,7 +257,11 @@ async function cardsApi(request, env) {
   const isAdmin = adminAllowed(env, form);
 
   if (action === "admin-auth") {
-    return isAdmin ? json(200, { ok: true }) : json(403, { error: "관리자 비밀번호가 올바르지 않습니다." });
+    const limit = await checkAdminRateLimit(env, request);
+    if (!limit.allowed) return json(429, { error: "관리자 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요." });
+    if (!isAdmin) return json(403, { error: "관리자 비밀번호가 올바르지 않습니다." });
+    await env.DB.prepare("DELETE FROM app_settings WHERE setting_key=?").bind(limit.key).run();
+    return json(200, { ok: true });
   }
   if (action === "create") {
     const name_ko = field(form, "name_ko", 100), name_ja = field(form, "name_ja", 100);
